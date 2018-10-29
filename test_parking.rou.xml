@@ -1,0 +1,23 @@
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+   <vType id="bus" vClass="bus" personCapacity="100" accel="1.8" decel="2.8" sigma="0" length="5" minGap="1.5" maxSpeed="70" laneChangingModel="SL2015" lcSpeedGain="10" lcPushy="1" lcCooperative="1"/>
+   <route id="parking" edges="parking">
+       <stop lane="parking_0" startPos="0" endPos="35" triggered="true" parking="true"/>
+       <stop lane="parking_0" startPos="400" endPos="500" triggered="true" parking="false"/>
+       <stop lane="parking_0" startPos="400" endPos="500" triggered="true" parking="false"/>
+   </route>
+   <person id="passenger1" depart="10">
+       <walk from="parking" to="parking" departPos="0" arrivalPos="10"/>
+       <ride from="parking" to="parking" lines="car1"/>
+       <walk from="parking" to="parking" departPos="495" arrivalPos="470"/>
+       <walk from="parking" to="parking" departPos="470" arrivalPos="495"/>
+       <ride from="parking" to="parking" lines="car1"/>
+   </person>
+   <person id="passenger2" depart="10">
+       <walk from="parking" to="parking" departPos="0" arrivalPos="30"/>
+       <ride from="parking" to="parking" lines="car1"/>
+       <walk from="parking" to="parking" departPos="495" arrivalPos="480"/>
+       <walk from="parking" to="parking" departPos="480" arrivalPos="495"/>
+       <ride from="parking" to="parking" lines="car1"/>
+   </person>
+   <vehicle id="car1" type="bus" route="parking" depart="30" departSpeed="0"/>
+</routes>
