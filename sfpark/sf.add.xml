@@ -8,7 +8,4 @@
    <poi id="PG_7" type="PG" x="2340" y="2619" color="1,1,1" imgFile="parking.bmp" width="40" height="40"/>
    <poi id="PG_4" type="PG" x="3040" y="2270" color="1,1,1" imgFile="parking.bmp" width="40" height="40"/>
 
-
-   <poly id="1" color="RED" fill="true" shape="1840,3390 2850,3390 2850,4400 1840,4400 2000,3500 2200,3500" layer="0"/>
-
 </additional>
