@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<routes>
+  <trip id="0" type="passenger" color="1,1,0" from="26938250_0" to="48211487_0_r-517260065_0_r-416877246_0_r" depart="40560"/>
+  <trip id="1" type="passenger" color="1,1,0" from="48211487_0_r-517260065_0_r-416877246_0_r" to="204967524_0_r-204967527_0_r-204967526_0_r" depart="46800"/>
+  <trip id="2" type="passenger" color="1,1,0" from="204967524_0_r-204967527_0_r-204967526_0_r" to="417099340_0" depart="48600"/>
+  <trip id="3" type="passenger" color="1,1,0" from="417099340_0" to="26938250_0" depart="50940"/>
+  <trip id="4" type="passenger" color="1,1,0" from="135116277_0" to="397122398_0_r" depart="29760"/>
+  <trip id="5" type="passenger" color="1,1,0" from="397122398_0_r" to="135116277_0" depart="50460"/>
+</routes>
