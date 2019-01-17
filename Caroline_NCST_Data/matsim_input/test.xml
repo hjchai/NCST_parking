@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE population SYSTEM "http://www.matsim.org/files/dtd/population_v6.dtd">
+
+<population desc="population written from streaming">
+
+
+
+<!-- ====================================================================== -->
+
+	<person id="23">
+		<attributes>
+			<attribute name="vot" class="java.lang.Double" >1.0</attribute>
+		</attributes>
+		<plan selected="yes">
+			<activity type="home" x="551580.125" y="4183408.41558" end_time="11:16:00" >
+			</activity>
+			<leg mode="walk">
+			</leg>
+			<activity type="escort" x="551957.8125" y="4183671.22942" end_time="13:00:00" >
+			</activity>
+			<leg mode="walk">
+			</leg>
+			<activity type="othmaint" x="550970.0625" y="4184210.93926" end_time="13:30:00" >
+			</activity>
+			<leg mode="walk">
+			</leg>
+			<activity type="escort" x="552256.8125" y="4183303.6706" end_time="14:09:00" >
+			</activity>
+			<leg mode="walk">
+			</leg>
+			<activity type="home" x="551580.125" y="4183408.41558" end_time="14:39:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="50">
+		<attributes>
+			<attribute name="vot" class="java.lang.Double" >5.291373</attribute>
+		</attributes>
+		<plan selected="yes">
+			<activity type="home" x="547066.9375" y="4183640.73882" end_time="08:16:00" >
+			</activity>
+			<leg mode="car">
+			</leg>
+			<activity type="shopping" x="550081.25" y="4168377.66547" end_time="14:01:00" >
+			</activity>
+			<leg mode="ride">
+			</leg>
+			<activity type="home" x="547066.9375" y="4183640.73882" end_time="14:31:00" >
+			</activity>
+		</plan>
+
+	</person>
+</population>
