@@ -119,8 +119,10 @@ def createOriginalTripXML(data):
                              encoding="utf-8")
 
     try:
-        with open("example.xml", "wb") as xml_writer:
+        with open("originaltrip.xml", "wb") as xml_writer:
             xml_writer.write(obj_xml)
+        xml_writer.close()
+        print("OriginalTripXML created successfully!")
     except IOError:
         pass
 
@@ -129,18 +131,18 @@ def createVehicle(data):
         Create a vehicle XML element
     """
     vehicle= objectify.Element("trip")
-    trip.set("person", data["person"])
-    trip.set("mode", data["mode"])
-    trip.set("vot", data["vot"])
-    trip.set("from_type", data["from_type"])
-    trip.set("from_x", data["from_x"])
-    trip.set("from_y", data["from_y"])
-    trip.set("to_type", data["to_type"])
-    trip.set("to_x", data["to_x"])
-    trip.set("to_y", data["to_y"])
-    trip.set("from_end_time", data["from_end_time"])
-    trip.set("to_end_time", data["to_end_time"])
-    return trip
+    vehicle.set("person", data["person"])
+    vehicle.set("mode", data["mode"])
+    vehicle.set("vot", data["vot"])
+    vehicle.set("from_type", data["from_type"])
+    vehicle.set("from_x", data["from_x"])
+    vehicle.set("from_y", data["from_y"])
+    vehicle.set("to_type", data["to_type"])
+    vehicle.set("to_x", data["to_x"])
+    vehicle.set("to_y", data["to_y"])
+    vehicle.set("from_end_time", data["from_end_time"])
+    vehicle.set("to_end_time", data["to_end_time"])
+    return vehicle
 
 def createVehicleXML(data):
     """
@@ -155,21 +157,23 @@ def createVehicleXML(data):
     for trip in data:
         root.append(createOriginalTrip(trip))
 
-        # remove lxml annotation
-        objectify.deannotate(root)
-        etree.cleanup_namespaces(root)
+    # remove lxml annotation
+    objectify.deannotate(root)
+    etree.cleanup_namespaces(root)
 
-        # create the xml string
-        obj_xml = etree.tostring(root,
-                                 pretty_print=True,
-                                 xml_declaration=True,
-                                 encoding="utf-8")
+    # create the xml string
+    obj_xml = etree.tostring(root,
+                             pretty_print=True,
+                             xml_declaration=True,
+                             encoding="utf-8")
 
-        try:
-            with open("addNode.xml", "wb") as xml_writer:
-                xml_writer.write(obj_xml)
-        except IOError:
-            pass
+    try:
+        with open("addNode.xml", "wb") as xml_writer:
+            xml_writer.write(obj_xml)
+        xml_writer.close()
+        print("VehicleXML created successfully!")
+    except IOError:
+        pass
 
 def getClosestEdge(x, y, net, radius):
     edges = net.getNeighboringEdges(x, y, radius)
@@ -183,6 +187,7 @@ def createTrip(data, net):
     """
         Create a trip XML element
     """
+    flag = True # set the flag to determin if closestedge is found or not
     radius = 1000
     trip = objectify.Element("trip")
     trip.set("id", data["trip_id"])
@@ -192,14 +197,23 @@ def createTrip(data, net):
     # map offset. sumolib net uses offset to convert utm to local coordinate
     offset = [-440044.55, -4068040.52]
     from_edge = getClosestEdge(float(data["from_x"])+offset[0], float(data["from_y"])+offset[1], net, radius)
-    trip.set("from", from_edge.getID())
+    if from_edge is None:
+        flag = False
+        trip.set("from", "")
+    else:
+        trip.set("from", from_edge.getID())
 
     to_edge = getClosestEdge(float(data["to_x"])+offset[0], float(data["to_y"])+offset[1], net, radius)
-    trip.set("to", to_edge.getID())
+    if to_edge is None:
+        flag = False
+        trip.set("to", "")
+    else:
+        trip.set("to", to_edge.getID())
 
     # Set departure time (in second) for this trip
     trip.set("depart", str(get_sec(data["from_end_time"])))
-    return trip
+
+    return trip, flag
 
 def createTripXML(data):
     """
@@ -213,24 +227,31 @@ def createTripXML(data):
     # read sumo network
     net = sumolib.net.readNet('/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/network.net.xml')
 
+    count = 0
     for trip in data:
-        root.append(createTrip(trip, net))
+        trip, flag = createTrip(trip, net)
+        if flag:
+            root.append(trip)
+        print("Trip: " + str(count))
+        count += 1
 
-        # remove lxml annotation
-        objectify.deannotate(root)
-        etree.cleanup_namespaces(root)
+    # remove lxml annotation
+    objectify.deannotate(root)
+    etree.cleanup_namespaces(root)
 
-        # create the xml string
-        obj_xml = etree.tostring(root,
-                                 pretty_print=True,
-                                 xml_declaration=True,
-                                 encoding="utf-8")
+    # create the xml string
+    obj_xml = etree.tostring(root,
+                             pretty_print=True,
+                             xml_declaration=True,
+                             encoding="utf-8")
 
-        try:
-            with open("/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/trip.xml", "wb") as xml_writer:
-                xml_writer.write(obj_xml)
-        except IOError:
-            pass
+    try:
+        with open("/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/trip.xml", "wb") as xml_writer:
+            xml_writer.write(obj_xml)
+        xml_writer.close()
+        print("TripXML created successfully!")
+    except IOError:
+        pass
 
 if __name__ == "__main__":
     trips = parseXML('../Caroline_NCST_Data/matsim_input/plans_0.01.xml')
