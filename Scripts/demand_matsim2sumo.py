@@ -70,8 +70,8 @@ def parseXML(xmlfile):
                     trip["to_type"] = to_type
                     trip["to_x"] = to_x
                     trip["to_y"] = to_y
-                    trip["from_end_time"] = from_end_time
-                    trip["to_end_time"] = to_end_time
+                    trip["from_end_time"] = str(get_sec(from_end_time))
+                    trip["to_end_time"] = str(get_sec(to_end_time))
                     trip["mode"] = mode
                     trip["vot"] = vot
                     trips.append(trip)
@@ -211,7 +211,7 @@ def createTrip(data, net):
         trip.set("to", to_edge.getID())
 
     # Set departure time (in second) for this trip
-    trip.set("depart", str(get_sec(data["from_end_time"])))
+    trip.set("depart", str(data["from_end_time"]))
 
     return trip, flag
 
@@ -248,7 +248,7 @@ def createTripXML(data):
 
     try:
         #with open("/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/trip.xml", "wb") as xml_writer:
-        with open("trip.xml", "wb") as xml_witer:
+        with open("trip.xml", "wb") as xml_writer:
             xml_writer.write(obj_xml)
         xml_writer.close()
         print("TripXML created successfully!")
@@ -256,7 +256,8 @@ def createTripXML(data):
         pass
 
 if __name__ == "__main__":
-    trips = parseXML('../Caroline_NCST_Data/matsim_input/plans_0.01.xml')
-    createOriginalTripXML(trips)
-    createVehicleXML(trips)
-    createTripXML(trips)
+    trips = parseXML('../Caroline_NCST_Data/matsim_input/test.xml')
+    trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
+    createOriginalTripXML(trips_sorted)
+    createVehicleXML(trips_sorted)
+    createTripXML(trips_sorted)
