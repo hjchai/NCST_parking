@@ -232,7 +232,8 @@ def createTripXML(data):
         trip, flag = createTrip(trip, net)
         if flag:
             root.append(trip)
-        print("Trip: " + str(count))
+        if count % 100 == 0:
+            print("Trip: " + str(count))
         count += 1
 
     # remove lxml annotation
@@ -246,7 +247,8 @@ def createTripXML(data):
                              encoding="utf-8")
 
     try:
-        with open("/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/trip.xml", "wb") as xml_writer:
+        #with open("/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/trip.xml", "wb") as xml_writer:
+        with open("trip.xml", "wb") as xml_witer:
             xml_writer.write(obj_xml)
         xml_writer.close()
         print("TripXML created successfully!")
