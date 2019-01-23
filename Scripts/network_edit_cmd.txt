@@ -1,0 +1,2 @@
+netconvert --matsim network_parkingCost.xml -o network.net.xml
+netconvert --keep-edges.in-boundary "108228,110964,114688,116695" -s network.net.xml -o network_trim.net.xml
