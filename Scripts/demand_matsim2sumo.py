@@ -1,4 +1,5 @@
 from lxml import etree, objectify
+import random
 
 try:
     from StringIO import StringIO
@@ -13,6 +14,9 @@ else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
 import sumolib
+
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 
 def get_sec(time_str):
     h, m, s = time_str.split(':')
@@ -183,7 +187,7 @@ def getClosestEdge(x, y, net, radius):
         dist, closestEdge = distancesAndEdges[0]
         return closestEdge
 
-def createTrip(data, net):
+def createTrip(data, net, BBox, offset, ODs):
     """
         Create a trip XML element
     """
@@ -194,26 +198,72 @@ def createTrip(data, net):
     trip.set("type", "passenger")
     trip.set("color", "1,1,0")
 
-    # map offset. sumolib net uses offset to convert utm to local coordinate
-    offset = [-440044.55, -4068040.52]
-    from_edge = getClosestEdge(float(data["from_x"])+offset[0], float(data["from_y"])+offset[1], net, radius)
-    if from_edge is None:
-        flag = False
-        trip.set("from", "")
-    else:
-        trip.set("from", from_edge.getID())
+    point_from = Point(float(data["from_x"])+offset[0], float(data["from_y"])+offset[1])
+    point_to = Point(float(data["to_x"])+offset[0], float(data["to_y"])+offset[1])
+    polygon = Polygon([(BBox[0][0], BBox[0][1]), (BBox[1][0], BBox[0][1]), (BBox[1][0], BBox[1][1]), (BBox[0][0], BBox[1][1])])
 
-    to_edge = getClosestEdge(float(data["to_x"])+offset[0], float(data["to_y"])+offset[1], net, radius)
-    if to_edge is None:
-        flag = False
-        trip.set("to", "")
-    else:
-        trip.set("to", to_edge.getID())
+    if polygon.contains(point_from) or polygon.contains(point_to):
+        print("This trip has at least one end in the ROI.")
+        flag = True
+        if polygon.contains(point_from) and not polygon.contains(point_to):
+            from_edge = getClosestEdge(float(data["from_x"])+offset[0], float(data["from_y"])+offset[1], net, radius)
+            if from_edge is None:
+                flag = False
+                trip.set("from", "")
+            else:
+                trip.set("from", from_edge.getID())
+            to_edge_id = random.choices(ODs["destinations"], ODs["destination_weights"])[0]
+            trip.set("to", to_edge_id)
+        elif polygon.contains(point_to) and not polygon.contains(point_from):
+            to_edge = getClosestEdge(float(data["to_x"]) + offset[0], float(data["to_y"]) + offset[1], net, radius)
+            if to_edge is None:
+                flag = False
+                trip.set("to", "")
+            else:
+                trip.set("to", to_edge.getID())
+            from_edge_id = random.choices(ODs["origins"], ODs["origin_weights"])[0]
+            trip.set("from", from_edge_id)
+        else:
+            from_edge = getClosestEdge(float(data["from_x"]) + offset[0], float(data["from_y"]) + offset[1], net,
+                                       radius)
+            if from_edge is None:
+                flag = False
+                trip.set("from", "")
+            else:
+                trip.set("from", from_edge.getID())
 
+            to_edge = getClosestEdge(float(data["to_x"]) + offset[0], float(data["to_y"]) + offset[1], net, radius)
+            if to_edge is None:
+                flag = False
+                trip.set("to", "")
+            else:
+                trip.set("to", to_edge.getID())
+    else:
+        flag = False
     # Set departure time (in second) for this trip
     trip.set("depart", str(data["from_end_time"]))
 
     return trip, flag
+
+def getOD(ODFile):
+    origins = []
+    origin_weights = []
+    destinations = []
+    destination_weights = []
+
+    ods = etree.parse(ODFile).getroot()
+
+    for od in ods.xpath('origin'):
+        id = od.attrib["id"]
+        weight = od.attrib["weight"]
+        origins.append(id)
+        origin_weights.append(int(weight))
+    for od in ods.xpath('destination'):
+        id = od.attrib["id"]
+        weight = od.attrib["weight"]
+        destinations.append(id)
+        destination_weights.append(int(weight))
+    return {"origins": origins, "origin_weights": origin_weights, "destinations": destinations, "destination_weights": destination_weights}
 
 def createTripXML(data):
     """
@@ -225,11 +275,21 @@ def createTripXML(data):
     root = objectify.fromstring(xml)
 
     # read sumo network
-    net = sumolib.net.readNet('/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/network.net.xml')
+    net = sumolib.net.readNet('/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/hello_trimmed.net.xml')
+
+    # map offset. sumolib net uses offset to convert utm to local coordinate
+    offset = net.getLocationOffset()
+
+    # get bounding box
+    BBox = net.getBBoxXY() #[(bottom_left_X, bottom_left_Y), (top_right_X, top_right_Y)]
+
+    # read OD information
+    ODFile = "/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/hello.od.xml"
+    ODs = getOD(ODFile)
 
     count = 0
     for trip in data:
-        trip, flag = createTrip(trip, net)
+        trip, flag = createTrip(trip, net, BBox, offset, ODs)
         if flag:
             root.append(trip)
         if count % 100 == 0:
