@@ -220,7 +220,7 @@ def createTrip(data, net, BBox, offset, ODs):
         flag = True
         if polygon.contains(point_from) and not polygon.contains(point_to):
             from_edge = getClosestEdge(float(data["from_x"])+offset[0], float(data["from_y"])+offset[1], net, radius)
-            if from_edge is None:
+            if from_edge is None or from_edge.getID() in ODs["origins"]:
                 flag = False
                 trip.set("from", "")
             else:
@@ -229,7 +229,7 @@ def createTrip(data, net, BBox, offset, ODs):
             trip.set("to", to_edge_id)
         elif polygon.contains(point_to) and not polygon.contains(point_from):
             to_edge = getClosestEdge(float(data["to_x"]) + offset[0], float(data["to_y"]) + offset[1], net, radius)
-            if to_edge is None:
+            if to_edge is None or to_edge.getID() in ODs["destinations"]:
                 flag = False
                 trip.set("to", "")
             else:
@@ -239,14 +239,14 @@ def createTrip(data, net, BBox, offset, ODs):
         else:
             from_edge = getClosestEdge(float(data["from_x"]) + offset[0], float(data["from_y"]) + offset[1], net,
                                        radius)
-            if from_edge is None:
+            if from_edge is None or from_edge.getID() in ODs["origins"]:
                 flag = False
                 trip.set("from", "")
             else:
                 trip.set("from", from_edge.getID())
 
             to_edge = getClosestEdge(float(data["to_x"]) + offset[0], float(data["to_y"]) + offset[1], net, radius)
-            if to_edge is None:
+            if to_edge is None or to_edge.getID() in ODs["destinations"]:
                 flag = False
                 trip.set("to", "")
             else:
