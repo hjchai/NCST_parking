@@ -187,6 +187,19 @@ def getClosestEdge(x, y, net, radius):
         dist, closestEdge = distancesAndEdges[0]
         return closestEdge
 
+def weighted_choice(weights):
+    totals = []
+    running_total = 0
+
+    for w in weights:
+        running_total += w
+        totals.append(running_total)
+
+    rnd = random.random() * running_total
+    for i, total in enumerate(totals):
+        if rnd < total:
+            return i
+
 def createTrip(data, net, BBox, offset, ODs):
     """
         Create a trip XML element
@@ -212,7 +225,7 @@ def createTrip(data, net, BBox, offset, ODs):
                 trip.set("from", "")
             else:
                 trip.set("from", from_edge.getID())
-            to_edge_id = random.choices(ODs["destinations"], ODs["destination_weights"])[0]
+            to_edge_id = ODs["destinations"][weighted_choice(ODs["destination_weights"])]
             trip.set("to", to_edge_id)
         elif polygon.contains(point_to) and not polygon.contains(point_from):
             to_edge = getClosestEdge(float(data["to_x"]) + offset[0], float(data["to_y"]) + offset[1], net, radius)
@@ -221,7 +234,7 @@ def createTrip(data, net, BBox, offset, ODs):
                 trip.set("to", "")
             else:
                 trip.set("to", to_edge.getID())
-            from_edge_id = random.choices(ODs["origins"], ODs["origin_weights"])[0]
+            from_edge_id = ODs["origins"][weighted_choice(ODs["origin_weights"])]
             trip.set("from", from_edge_id)
         else:
             from_edge = getClosestEdge(float(data["from_x"]) + offset[0], float(data["from_y"]) + offset[1], net,
@@ -316,7 +329,7 @@ def createTripXML(data):
         pass
 
 if __name__ == "__main__":
-    trips = parseXML('../Caroline_NCST_Data/matsim_input/test.xml')
+    trips = parseXML('../Caroline_NCST_Data/matsim_input/plans_0.01.xml')
     trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
     createOriginalTripXML(trips_sorted)
     createVehicleXML(trips_sorted)
