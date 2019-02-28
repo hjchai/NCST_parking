@@ -18,8 +18,6 @@ import sumolib
 import traci
 import traci.constants as tc
 
-from qgis.core import *
-
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
@@ -107,7 +105,7 @@ def createOriginalTrip(data):
     trip.set("to_end_time", data["to_end_time"])
     return trip
 
-def createOriginalTripXML(data, filename):
+def createOriginalTripXML(data):
     """
        Create an XML file
     """
@@ -130,10 +128,10 @@ def createOriginalTripXML(data, filename):
                              encoding="utf-8")
 
     try:
-        with open(filename, "wb") as xml_writer:
+        with open("originaltrip.xml", "wb") as xml_writer:
             xml_writer.write(obj_xml)
         xml_writer.close()
-        print("{} created successfully!".format(filename))
+        print("OriginalTripXML created successfully!")
     except IOError:
         pass
 
@@ -379,123 +377,13 @@ def createTripXML(data, parkingAreas):
     except IOError:
         pass
 
-def readFeaturesFromShape(shapefile):
-    # supply path to qgis install location
-    QgsApplication.setPrefixPath('/usr', True)
-
-    # create a reference to the QgsApplication, setting the
-    # second argument to False disables the GUI
-    qgs = QgsApplication([], False)
-
-    # load providers
-    qgs.initQgis()
-    layer = QgsVectorLayer(shapefile, "", "ogr")
-    if not layer.isValid():
-        print("Layer failed to load!")
-
-    # create projection
-    crsSrc = QgsCoordinateReferenceSystem("EPSG:4326")  # WGS 84
-    crsDest = QgsCoordinateReferenceSystem("EPSG:32610")  # WGS 84 / UTM zone 10N
-    xform = QgsCoordinateTransform(crsSrc, crsDest, QgsProject.instance())
-    xform_reverse = QgsCoordinateTransform(crsDest, crsSrc, QgsProject.instance())
-
-    features = layer.getFeatures()
-
-    count = 0
-    for feature in features:
-        # retrieve every feature with its geometry and attributes
-        feature = feature.geometry()
-
-    #qgs.exitQgis()
-
-    return features, xform, xform_reverse
-
-def randomPointInFeature(feature):
-    bounds = feature.boundingBox()
-    xmin = bounds.xMinimum()
-    xmax = bounds.xMaximum()
-    ymin = bounds.yMinimum()
-    ymax = bounds.yMaximum()
-    p = 0
-    while p < 1:
-        x_coord = random.uniform(xmin, xmax)
-        y_coord = random.uniform(ymin, ymax)
-        pt = QgsPointXY(x_coord, y_coord)
-        tmp_geom = QgsGeometry.fromPointXY(pt)
-        if tmp_geom.contains(pt):
-            p += 1
-            return pt
-
-def randomizeOriginDestination(trips_sorted, features, xform, xform_reverse):
-    trips_sorted_randomized = trips_sorted
-    count = 0
-    for trip in trips_sorted_randomized:
-        from_x = float(trip["from_x"])
-        from_y = float(trip["from_y"])
-        to_x = float(trip["to_x"])
-        to_y = float(trip["to_y"])
-        # fromPoint = QgsPoint(from_x, from_y)
-        fromPoint_tr = xform_reverse.transform(from_x, from_y)
-        fromPointGeometry = QgsGeometry.fromPointXY(fromPoint_tr)
-        toPoint_tr = xform_reverse.transform(to_x, to_y)
-        toPointGeometry = QgsGeometry.fromPointXY(toPoint_tr)
-        for feature in features:
-            if feature.contains(fromPointGeometry):
-                point_rand = randomPointInFeature(feature)
-                point_rand_tr = xform.transform(point_rand.x(), point_rand.y())
-                trip["from_x"] = str(point_rand_tr.x())
-                trip["from_y"] = str(point_rand_tr.y())
-            if feature.contains(toPointGeometry):
-                point_rand = randomPointInFeature(feature)
-                point_rand_tr = xform.transform(point_rand.x(), point_rand.y())
-                trip["to_x"] = str(point_rand_tr.x())
-                trip["to_y"] = str(point_rand_tr.y())
-        count += 1
-        if count%100 is 0:
-            print("Trip: {}.".format(count))
-
-    return trips_sorted_randomized
-
-
 if __name__ == "__main__":
     traci.start(["sumo", "-c", "../cities/fairfield/fairfield.sumo.cfg"]) #initialize connect to traci
 
-    # supply path to qgis install location
-    QgsApplication.setPrefixPath('/usr', True)
-
-    # create a reference to the QgsApplication, setting the
-    # second argument to False disables the GUI
-    qgs = QgsApplication([], False)
-
-    # load providers
-    qgs.initQgis()
-    layer = QgsVectorLayer("selected_fairfield.shp", "", "ogr") # ../Caroline_NCST_Data/Communities_of_Concern_TAZ.shp
-    if not layer.isValid():
-        print("Layer failed to load!")
-
-    # create projection
-    crsSrc = QgsCoordinateReferenceSystem("EPSG:4326")  # WGS 84
-    crsDest = QgsCoordinateReferenceSystem("EPSG:32610")  # WGS 84 / UTM zone 10N
-    xform = QgsCoordinateTransform(crsSrc, crsDest, QgsProject.instance())
-    xform_reverse = QgsCoordinateTransform(crsDest, crsSrc, QgsProject.instance())
-
-    features = layer.getFeatures()
-    features_geometry = []
-    for feature in features:
-        # retrieve every feature with its geometry and attributes
-        features_geometry.append(feature.geometry())
-
     parkingAreas = parseParking('../cities/fairfield/on-parking.add.xml')
-
     trips = parseXML('../Caroline_NCST_Data/Scenario_1/matsim_input/plans_0.01.xml')
-
     trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
-    createOriginalTripXML(trips_sorted, "originaltrip.xml")
-
-    trips_sorted_randomized = randomizeOriginDestination(trips_sorted, features_geometry, xform, xform_reverse)
-    createOriginalTripXML(trips_sorted_randomized, "originaltrip_randomized.xml")
-
-    # createVehicleXML(trips_sorted)
+    createOriginalTripXML(trips_sorted)
+    createVehicleXML(trips_sorted)
     createTripXML(trips_sorted, parkingAreas)
     traci.close()
-    qgs.exitQgis()

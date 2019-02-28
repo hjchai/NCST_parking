@@ -1,4 +1,8 @@
-from qgis.core import *
+import sys
+sys.path.append("/usr/share/qgis/python")
+print(sys.path)
+
+from qgis.core import * # python-qgis only works with python3.6.
 import numpy as np
 
 file = open("/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/sf.poly.xml", "w")
@@ -20,7 +24,7 @@ qgs.initQgis()
 
 # Write your code here to load some layers, use processing
 # algorithms, etc.
-layer=QgsVectorLayer("downtown_taz.shp", "selected_taz", "ogr")
+layer = QgsVectorLayer("selected_fairfield.shp", "selected_taz", "ogr")
 if not layer.isValid():
     print("Layer failed to load!")
 
@@ -83,8 +87,8 @@ qgs.exitQgis()
 
 file.write("\n")
 file.write("</additional>")
-=======
-from PyQt5.QtCore import *
-
-layer = QgsProcessingUtils.mapLayerFromString("C:/Users/chaih/Desktop/NCST_parking/Caroline_NCST_Data/Communities_of_Concern_TAZ.shp", context)
-layer.name()
+# =======
+# from PyQt5.QtCore import *
+#
+# layer = QgsProcessingUtils.mapLayerFromString("C:/Users/chaih/Desktop/NCST_parking/Caroline_NCST_Data/Communities_of_Concern_TAZ.shp", context)
+# layer.name()

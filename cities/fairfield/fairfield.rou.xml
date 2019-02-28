@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes>
+
+    <!-- Krauss Model -->
+    <vType id="passenger" length="5.0" minGap="2.0" maxSpeed="30.0">
+        <carFollowing-Krauss accel="3.0" decel="5.0" sigma="0" tau="1.64" />
+    </vType>
+
+    <vType id="bus" accel="2.6" decel="4.5" sigma="0" length="12" minGap="3" maxSpeed="70" color="1,1,0" guiShape="bus"/>
+
+    <vType id="delivery" accel="2.6" decel="4.5" sigma="0" length="12" minGap="3" maxSpeed="70" color="1,1,0" guiShape="delivery"/>
+
+    <vType id="bike" vClass="bicycle"/>
+
+
+</routes>
