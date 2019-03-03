@@ -88,7 +88,7 @@ def parseXML(xmlfile):
                     trips.append(trip)
     return trips
 
-def createOriginalTrip(data):
+def generateTrip(data):
     """
         Create a trip XML element
     """
@@ -107,7 +107,7 @@ def createOriginalTrip(data):
     trip.set("to_end_time", data["to_end_time"])
     return trip
 
-def createOriginalTripXML(data, filename):
+def createAndSaveTripXML(data, filename):
     """
        Create an XML file
     """
@@ -117,7 +117,7 @@ def createOriginalTripXML(data, filename):
     root = objectify.fromstring(xml)
 
     for trip in data:
-        root.append(createOriginalTrip(trip))
+        root.append(generateTrip(trip))
 
     # remove lxml annotation
     objectify.deannotate(root)
@@ -487,13 +487,13 @@ if __name__ == "__main__":
 
     parkingAreas = parseParking('../cities/fairfield/on-parking.add.xml')
 
-    trips = parseXML('../Caroline_NCST_Data/Scenario_1/matsim_input/plans_0.01.xml')
+    trips = parseXML('../Caroline_NCST_Data/Scenario_1/matsim_input/plans_0.05.xml')
 
     trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
-    createOriginalTripXML(trips_sorted, "originaltrip.xml")
+    createAndSaveTripXML(trips_sorted, "originaltrip.xml")
 
     trips_sorted_randomized = randomizeOriginDestination(trips_sorted, features_geometry, xform, xform_reverse)
-    createOriginalTripXML(trips_sorted_randomized, "originaltrip_randomized.xml")
+    createAndSaveTripXML(trips_sorted_randomized, "originaltrip_randomized.xml")
 
     # createVehicleXML(trips_sorted)
     createTripXML(trips_sorted, parkingAreas)
