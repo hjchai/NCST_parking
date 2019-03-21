@@ -14,6 +14,7 @@ def split_XML(source_dataset, target_dataset, ext, xform_reverse, is_all):
         xml_writer.write('''<population desc="population written from streaming">\n''')
         xml_writer.write('''\n''')
 
+        person_count = 0
         for event, person in etree.iterparse(source_dataset, tag="person"):
             if not is_all:
                 plan = person[1] # all_7: plan=person[0], for the rest: plan=person[1]
@@ -38,15 +39,18 @@ def split_XML(source_dataset, target_dataset, ext, xform_reverse, is_all):
                 toPoint_tr = xform_reverse.transform(to_x, to_y)
 
                 if ext.contains(fromPoint_tr) or ext.contains(toPoint_tr):
-                    print("Contains one point")
+                    print("{} th person.".format(person_count))
+                    person_count = person_count + 1
                     obj_xml = etree.tostring(person,
                                              pretty_print=True,
                                              xml_declaration=False,
                                              encoding="utf-8").decode("utf-8")
                     xml_writer.write(obj_xml)
                     break
-            person.clear()  # free memory for the person that is already processed
+            person.clear()  # free memory for the person that is already processed`
         xml_writer.write('''</population>''')
+        xml_writer.close()
+        print("Total person count = {}".format(person_count))
     return
 
 
@@ -60,9 +64,9 @@ if __name__ == "__main__":
 
     # load providers
     qgs.initQgis()
-    layer = QgsVectorLayer("selected_fairfield.shp", "", "ogr")  # ../Caroline_NCST_Data/Communities_of_Concern_TAZ.shp
+    layer = QgsVectorLayer("../cities/fairfield/shp/selected_fairfield.shp", "", "ogr")  # ../Caroline_NCST_Data/Communities_of_Concern_TAZ.shp
     if not layer.isValid():
-        print("Layer failed to load!")
+        raise Exception("Layer failed to load!")
 
     # create projection
     crsSrc = QgsCoordinateReferenceSystem("EPSG:4326")  # WGS 84
@@ -78,7 +82,10 @@ if __name__ == "__main__":
         # retrieve every feature with its geometry and attributes
         features_geometry.append(feature.geometry())
 
-    source_dataset = "../Caroline_NCST_Data/Scenario_1/matsim_input/plans_all_7.xml"
-    target_dataset = "../cities/fairfield/fairfield_plans_all_7.xml"
+    flags_dict = {'all_7': True, '0.01': False, '0.05': False}
+    dataset = 'all_7'
 
-    split_XML(source_dataset, target_dataset, ext, xform_reverse, True)
+    source_dataset = '../Caroline_NCST_Data/Scenario_1/matsim_input/plans_' + dataset + '.xml'
+    target_dataset = '../cities/fairfield/fairfield_plans_' + dataset + '.xml'
+
+    split_XML(source_dataset, target_dataset, ext, xform_reverse, flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False

@@ -1,5 +1,6 @@
 from lxml import etree, objectify
 import random
+import numpy as np
 import operator
 
 try:
@@ -231,20 +232,30 @@ def getParkedEdge(to_edge_id, parkingAreas):
                 parkedEdge = edge
     return parkedEdge
 
-def createTrip(data, net, BBox, offset, ODs, parkingAreas):
+def createTrip(data, net, BBox, offset, ODs, parkingAreas, location):
     """
         Create a trip XML element
     """
     flag = True # set the flag to determin if closestedge is found or not
     radius = 1000
     trip = objectify.Element("trip")
-    trip.set("id", data["trip_id"])
+    trip.set("id", data["trip_id"] + '_' + location)
     trip.set("type", "passenger")
     trip.set("color", "1,1,0")
 
     point_from = Point(float(data["from_x"])+offset[0], float(data["from_y"])+offset[1])
     point_to = Point(float(data["to_x"])+offset[0], float(data["to_y"])+offset[1])
     polygon = Polygon([(BBox[0][0], BBox[0][1]), (BBox[1][0], BBox[0][1]), (BBox[1][0], BBox[1][1]), (BBox[0][0], BBox[1][1])])
+
+    # set parking duration based on parking type
+    # on-street parking: duration = 20 seconds
+    # off-street parking: duration is between 2hrs to 6PM-start_time
+    if location is 'on':
+        duration = 20
+    else:
+        duration = np.random.randint(7200, max(7200, 64800 - int(data['from_end_time']))+1)
+
+    stat = ''
 
     if polygon.contains(point_from) or polygon.contains(point_to):
         #print("This trip has at least one end in the ROI.")
@@ -263,7 +274,8 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas):
                 etree.SubElement(trip, "stop")
                 parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
                 trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
-                trip.stop.set("duration", "20")
+                trip.stop.set("duration", str(duration))
+                stat = 'out'
             trip.set("to", to_edge_id)
 
         # trip going into polygon
@@ -278,7 +290,8 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas):
                 etree.SubElement(trip, "stop")
                 parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
                 trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
-                trip.stop.set("duration", "20")
+                trip.stop.set("duration", str(duration))
+                stat = 'into'
             from_edge_id = ODs["origins"][weighted_choice(ODs["origin_weights"])]
             trip.set("from", from_edge_id)
 
@@ -303,13 +316,14 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas):
                 etree.SubElement(trip, "stop")
                 parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
                 trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
-                trip.stop.set("duration", "50")
+                trip.stop.set("duration", str(duration))
+                stat = 'within'
     else:
         flag = False
     # Set departure time (in second) for this trip
     trip.set("depart", str(data["from_end_time"]))
 
-    return trip, flag
+    return trip, flag, stat
 
 def getOD(ODFile):
     origins = []
@@ -331,7 +345,7 @@ def getOD(ODFile):
         destination_weights.append(float(weight))
     return {"origins": origins, "origin_weights": origin_weights, "destinations": destinations, "destination_weights": destination_weights}
 
-def createTripXML(data, parkingAreas):
+def createTripXML(data, parkingAreas_on, parkingAreas_off, dataset, on_percentage):
     """
        Create an XML file
     """
@@ -354,13 +368,35 @@ def createTripXML(data, parkingAreas):
     ODs = getOD(ODFile)
 
     count = 0
+    out = 0
+    into = 0
+    within = 0
     for trip in data:
-        trip, flag = createTrip(trip, net, BBox, offset, ODs, parkingAreas)
+        rnd = np.random.random()
+        if rnd <= on_percentage:
+            parkingAreas = parkingAreas_on
+            location = 'on'
+        else:
+            parkingAreas = parkingAreas_off
+            location = 'off'
+        trip, flag, stat = createTrip(trip, net, BBox, offset, ODs, parkingAreas, location)
         if flag:
             root.append(trip)
         if count % 100 == 0:
             print("Trip: " + str(count))
         count += 1
+
+        if stat is 'out':
+            out = out + 1
+        elif stat is 'into':
+            into = into + 1
+        else:
+            within = within + 1
+
+    print("Trips going out: {}".format(out))
+    print("Trips coming in: {}".format(into))
+    print("Trips within: {}".format(within))
+    print("Total trips: {}".format(count))
 
     # remove lxml annotation
     objectify.deannotate(root)
@@ -373,43 +409,43 @@ def createTripXML(data, parkingAreas):
                              encoding="utf-8")
 
     try:
-        with open("../cities/fairfield/trip.xml", "wb") as xml_writer:
+        with open('../cities/fairfield/trip_' + dataset + '_with_' + str(on_percentage) + '_on_street.xml', "wb") as xml_writer:
             xml_writer.write(obj_xml)
         xml_writer.close()
         print("TripXML created successfully!")
     except IOError:
         pass
 
-def readFeaturesFromShape(shapefile):
-    # supply path to qgis install location
-    QgsApplication.setPrefixPath('/usr', True)
-
-    # create a reference to the QgsApplication, setting the
-    # second argument to False disables the GUI
-    qgs = QgsApplication([], False)
-
-    # load providers
-    qgs.initQgis()
-    layer = QgsVectorLayer(shapefile, "", "ogr")
-    if not layer.isValid():
-        print("Layer failed to load!")
-
-    # create projection
-    crsSrc = QgsCoordinateReferenceSystem("EPSG:4326")  # WGS 84
-    crsDest = QgsCoordinateReferenceSystem("EPSG:32610")  # WGS 84 / UTM zone 10N
-    xform = QgsCoordinateTransform(crsSrc, crsDest, QgsProject.instance())
-    xform_reverse = QgsCoordinateTransform(crsDest, crsSrc, QgsProject.instance())
-
-    features = layer.getFeatures()
-
-    count = 0
-    for feature in features:
-        # retrieve every feature with its geometry and attributes
-        feature = feature.geometry()
-
-    #qgs.exitQgis()
-
-    return features, xform, xform_reverse
+# def readFeaturesFromShape(shapefile):
+#     # supply path to qgis install location
+#     QgsApplication.setPrefixPath('/usr', True)
+#
+#     # create a reference to the QgsApplication, setting the
+#     # second argument to False disables the GUI
+#     qgs = QgsApplication([], False)
+#
+#     # load providers
+#     qgs.initQgis()
+#     layer = QgsVectorLayer(shapefile, "", "ogr")
+#     if not layer.isValid():
+#         print("Layer failed to load!")
+#
+#     # create projection
+#     crsSrc = QgsCoordinateReferenceSystem("EPSG:4326")  # WGS 84
+#     crsDest = QgsCoordinateReferenceSystem("EPSG:32610")  # WGS 84 / UTM zone 10N
+#     xform = QgsCoordinateTransform(crsSrc, crsDest, QgsProject.instance())
+#     xform_reverse = QgsCoordinateTransform(crsDest, crsSrc, QgsProject.instance())
+#
+#     features = layer.getFeatures()
+#
+#     count = 0
+#     for feature in features:
+#         # retrieve every feature with its geometry and attributes
+#         feature = feature.geometry()
+#
+#     #qgs.exitQgis()
+#
+#     return features, xform, xform_reverse
 
 def randomPointInFeature(feature):
     bounds = feature.boundingBox()
@@ -492,7 +528,7 @@ def generateParkingRerouter(parkingAreas_on, parkingAreas_off, edges):
 
 
 if __name__ == "__main__":
-    traci.start(["sumo", "-c", "../cities/fairfield/fairfield.sumo.cfg"]) #initialize connect to traci
+    traci.start(["sumo", "-c", "../cities/fairfield/dummy.sumo.cfg"]) #initialize connect to traci using a dummy sumo cfg file
 
     # supply path to qgis install location
     QgsApplication.setPrefixPath('/usr', True)
@@ -503,9 +539,9 @@ if __name__ == "__main__":
 
     # load providers
     qgs.initQgis()
-    layer = QgsVectorLayer("selected_fairfield.shp", "", "ogr") # ../Caroline_NCST_Data/Communities_of_Concern_TAZ.shp
+    layer = QgsVectorLayer("../cities/fairfield/shp/selected_fairfield.shp", "", "ogr") # ../Caroline_NCST_Data/Communities_of_Concern_TAZ.shp
     if not layer.isValid():
-        print("Layer failed to load!")
+        raise Exception("Layer failed to load!")
 
     # create projection
     crsSrc = QgsCoordinateReferenceSystem("EPSG:4326")  # WGS 84
@@ -525,7 +561,9 @@ if __name__ == "__main__":
     edges = net.getEdges()
     generateParkingRerouter(parkingAreas_on, parkingAreas_off, edges)
 
-    trips = parseXML('../cities/fairfield/fairfield_plans_all_7.xml', True)
+    flags_dict = {'all_7': True, '0.01': False, '0.05': False}
+    dataset = 'all_7'
+    trips = parseXML('../cities/fairfield/fairfield_plans_' + dataset + '.xml', flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False
 
     trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
     createAndSaveTripXML(trips_sorted, "originaltrip.xml")
@@ -534,6 +572,7 @@ if __name__ == "__main__":
     createAndSaveTripXML(trips_sorted_randomized, "originaltrip_randomized.xml")
 
     # createVehicleXML(trips_sorted)
-    createTripXML(trips_sorted, parkingAreas_on)
+    on_percentage = 0.1
+    createTripXML(trips_sorted, parkingAreas_on, parkingAreas_off, dataset, on_percentage)
     traci.close()
     qgs.exitQgis()
