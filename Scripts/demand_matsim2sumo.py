@@ -29,7 +29,7 @@ def get_sec(time_str):
     h, m, s = time_str.split(':')
     return int(h) * 3600 + int(m) * 60 + int(s)
 
-def parseXML(xmlfile):
+def parseXML(xmlfile, is_all):
     trips = []
     trip_id = 0
     with open(xmlfile) as fobj:
@@ -40,20 +40,18 @@ def parseXML(xmlfile):
 
         for person in population.getchildren():
             if len(person):
-                # print(person)
-                id = person.attrib["id"]
-                # print(id)
-                attributes = person[0]
-                # print(attributes.tag)
-                attribute = attributes[0]
-                # print(attribute.tag)
-                vot = attribute.text
-                # print(vot)
-                plan = person[1]
-                selected = plan.attrib["selected"]
-                # print(selected)
+                if not is_all:
+                    id = person.attrib["id"]
+                    attributes = person[0]
+                    attribute = attributes[0]
+                    vot = attribute.text
+                    plan = person[1]
+                else:
+                    id = person.attrib["id"]
+                    vot = "0"
+                    plan = person[0]
+
                 num_trips = int((len(plan.getchildren())-1)/2)
-                # print(num_trips)
                 for num in range(num_trips):
                     trip = {}
                     from_activity = plan.getchildren()[2*num]
@@ -68,7 +66,10 @@ def parseXML(xmlfile):
                     to_type = to_activity.attrib["type"]
                     to_x = to_activity.attrib["x"]
                     to_y = to_activity.attrib["y"]
-                    to_end_time = to_activity.attrib["end_time"]
+                    try:
+                        to_end_time = to_activity.attrib["end_time"]
+                    except:
+                        to_end_time = "00:00:00"
 
                     mode = leg.attrib["mode"]
 
@@ -456,6 +457,39 @@ def randomizeOriginDestination(trips_sorted, features, xform, xform_reverse):
 
     return trips_sorted_randomized
 
+def generateParkingRerouter(parkingAreas_on, parkingAreas_off, edges):
+    edges_str = ''
+    for edge in edges:
+        edges_str = edges_str + edge.getID() + ' '
+    edges_str = edges_str[:-1]
+
+    with open("../cities/fairfield/reroute_parking.xml", "w") as xml_writer:
+        xml_writer.write('''<?xml version="1.0" encoding="UTF-8"?>\n''')
+        xml_writer.write('''<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">\n''')
+        for parkingAreas, rerouter_id in zip([parkingAreas_on, parkingAreas_off], ['rerouter_on', 'rerouter_off']):
+            rerouter = objectify.Element("rerouter")
+            rerouter.set("id", rerouter_id)
+            rerouter.set("edges", edges_str)
+
+            interval = objectify.Element("interval")
+            interval.set("begin", "0")
+            interval.set("end", "100000")
+
+            for parkingArea in parkingAreas:
+                parkingAreaID = parkingAreas[parkingArea].attrib["id"]
+                parkingAreaOBJ = objectify.Element("parkingAreaReroute")
+                parkingAreaOBJ.set("id", parkingAreaID)
+                interval.append(parkingAreaOBJ)
+            rerouter.append(interval)
+            objectify.deannotate(rerouter)
+            etree.cleanup_namespaces(rerouter)
+            obj_xml = etree.tostring(rerouter,
+                                     pretty_print=True,
+                                     xml_declaration=False,
+                                     encoding="utf-8").decode("utf-8")
+            xml_writer.write(obj_xml)
+        xml_writer.write('''</additional>''')
+
 
 if __name__ == "__main__":
     traci.start(["sumo", "-c", "../cities/fairfield/fairfield.sumo.cfg"]) #initialize connect to traci
@@ -485,9 +519,13 @@ if __name__ == "__main__":
         # retrieve every feature with its geometry and attributes
         features_geometry.append(feature.geometry())
 
-    parkingAreas = parseParking('../cities/fairfield/on-parking.add.xml')
+    parkingAreas_on = parseParking('../cities/fairfield/on-parking.add.xml')
+    parkingAreas_off = parseParking('../cities/fairfield/off-parking.add.xml')
+    net = sumolib.net.readNet('../cities/fairfield/fairfield.net.xml')
+    edges = net.getEdges()
+    generateParkingRerouter(parkingAreas_on, parkingAreas_off, edges)
 
-    trips = parseXML('../Caroline_NCST_Data/Scenario_1/matsim_input/plans_0.05.xml')
+    trips = parseXML('../cities/fairfield/fairfield_plans_all_7.xml', True)
 
     trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
     createAndSaveTripXML(trips_sorted, "originaltrip.xml")
@@ -496,6 +534,6 @@ if __name__ == "__main__":
     createAndSaveTripXML(trips_sorted_randomized, "originaltrip_randomized.xml")
 
     # createVehicleXML(trips_sorted)
-    createTripXML(trips_sorted, parkingAreas)
+    createTripXML(trips_sorted, parkingAreas_on)
     traci.close()
     qgs.exitQgis()
