@@ -1,2 +1,6 @@
 #directories
 .idea/*
+Caroline_NCST_Data/
+venv/
+#files
+*.pyc

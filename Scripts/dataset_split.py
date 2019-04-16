@@ -55,6 +55,13 @@ def split_XML(source_dataset, target_dataset, ext, xform_reverse, is_all):
 
 
 if __name__ == "__main__":
+    # specify city information
+    city_shapefile = "../cities/fairfield/shp/selected_fairfield.shp"
+    flags_dict = {'all_7': True, '0.01': False, '0.05': False}
+    dataset = '0.01'
+    source_dataset = '../Caroline_NCST_Data/Scenario_1/matsim_input/plans_' + dataset + '.xml'
+    target_dataset = '../cities/fairfield/fairfield_plans_' + dataset + '.xml'
+
     # supply path to qgis install location
     QgsApplication.setPrefixPath('/usr', True)
 
@@ -64,7 +71,7 @@ if __name__ == "__main__":
 
     # load providers
     qgs.initQgis()
-    layer = QgsVectorLayer("../cities/fairfield/shp/selected_fairfield.shp", "", "ogr")  # ../Caroline_NCST_Data/Communities_of_Concern_TAZ.shp
+    layer = QgsVectorLayer(city_shapefile, "", "ogr")  # ../Caroline_NCST_Data/Communities_of_Concern_TAZ.shp
     if not layer.isValid():
         raise Exception("Layer failed to load!")
 
@@ -81,11 +88,5 @@ if __name__ == "__main__":
     for feature in features:
         # retrieve every feature with its geometry and attributes
         features_geometry.append(feature.geometry())
-
-    flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    dataset = 'all_7'
-
-    source_dataset = '../Caroline_NCST_Data/Scenario_1/matsim_input/plans_' + dataset + '.xml'
-    target_dataset = '../cities/fairfield/fairfield_plans_' + dataset + '.xml'
 
     split_XML(source_dataset, target_dataset, ext, xform_reverse, flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False

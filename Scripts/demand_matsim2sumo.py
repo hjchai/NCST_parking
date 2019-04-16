@@ -562,7 +562,7 @@ if __name__ == "__main__":
     generateParkingRerouter(parkingAreas_on, parkingAreas_off, edges)
 
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    dataset = 'all_7'
+    dataset = '0.01'
     trips = parseXML('../cities/fairfield/fairfield_plans_' + dataset + '.xml', flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False
 
     trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
