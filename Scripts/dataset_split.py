@@ -58,7 +58,7 @@ if __name__ == "__main__":
     # specify city information
     city_shapefile = "../cities/fairfield/shp/selected_fairfield.shp"
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    dataset = '0.01'
+    dataset = 'all_7'
     source_dataset = '../Caroline_NCST_Data/Scenario_1/matsim_input/plans_' + dataset + '.xml'
     target_dataset = '../cities/fairfield/fairfield_plans_' + dataset + '.xml'
 

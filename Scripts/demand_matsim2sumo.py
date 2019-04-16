@@ -24,7 +24,10 @@ from qgis.core import *
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
-from parking import *
+from parking import parseParking
+
+drop_off_duration = 20 # in second
+on_off_parking_threshold = 7200 # 2 hours in seconds
 
 def get_sec(time_str):
     h, m, s = time_str.split(':')
@@ -232,14 +235,14 @@ def getParkedEdge(to_edge_id, parkingAreas):
                 parkedEdge = edge
     return parkedEdge
 
-def createTrip(data, net, BBox, offset, ODs, parkingAreas, location):
+def createTrip(data, net, BBox, offset, ODs, parkingAreas, type, duration):
     """
         Create a trip XML element
     """
     flag = True # set the flag to determin if closestedge is found or not
     radius = 1000
     trip = objectify.Element("trip")
-    trip.set("id", data["trip_id"] + '_' + location)
+    trip.set("id", data["trip_id"] + '_' + type)
     trip.set("type", "passenger")
     trip.set("color", "1,1,0")
 
@@ -247,13 +250,13 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas, location):
     point_to = Point(float(data["to_x"])+offset[0], float(data["to_y"])+offset[1])
     polygon = Polygon([(BBox[0][0], BBox[0][1]), (BBox[1][0], BBox[0][1]), (BBox[1][0], BBox[1][1]), (BBox[0][0], BBox[1][1])])
 
-    # set parking duration based on parking type
-    # on-street parking: duration = 20 seconds
-    # off-street parking: duration is between 2hrs to 6PM-start_time
-    if location is 'on':
-        duration = 20
-    else:
-        duration = np.random.randint(7200, max(7200, 64800 - int(data['from_end_time']))+1)
+    # # set parking duration based on parking type
+    # # on-street parking: duration = 20 seconds
+    # # off-street parking: duration is between 2hrs to 6PM-start_time
+    # if location is 'on':
+    #     duration = 20
+    # else:
+    #     duration = np.random.randint(7200, max(7200, 64800 - int(data['from_end_time']))+1)
 
     stat = ''
 
@@ -261,7 +264,10 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas, location):
         #print("This trip has at least one end in the ROI.")
         flag = True
 
-        # trip going out polygon
+        #### trip going out polygon:
+        # if it is a drop off trip, then parking at to_edge_id for 20s, after that travel back to from node
+        # if it is a on or off parking, do not assign parking as it is going to park somewhere outside the network
+        ####
         if polygon.contains(point_from) and not polygon.contains(point_to): # trip going out polygon
             from_edge = getClosestEdge(float(data["from_x"])+offset[0], float(data["from_y"])+offset[1], net, radius)
             from_edge_id = from_edge.getID()
@@ -271,31 +277,44 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas, location):
                 trip.set("from", "")
             else:
                 trip.set("from", from_edge_id)
-                etree.SubElement(trip, "stop")
-                parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
-                trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
-                trip.stop.set("duration", str(duration))
+                if type is 'drop-off':
+                    etree.SubElement(trip, "stop")
+                    parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
+                    trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
+                    trip.stop.set("duration", str(duration))
                 stat = 'out'
-            trip.set("to", to_edge_id)
+            # need to make sure there is a path going back to from node
+            if type is 'drop-off':
+                trip.set("to", from_edge_id)
+            else:
+                trip.set("to", to_edge_id)
 
-        # trip going into polygon
+        #### trip going into polygon:
+        #
+        ####
         elif polygon.contains(point_to) and not polygon.contains(point_from):
+            from_edge_id = ODs["origins"][weighted_choice(ODs["origin_weights"])]
+            trip.set("from", from_edge_id)
+
             to_edge = getClosestEdge(float(data["to_x"]) + offset[0], float(data["to_y"]) + offset[1], net, radius)
             to_edge_id = to_edge.getID()
             if to_edge is None or to_edge_id in ODs["origins"]:
                 flag = False
                 trip.set("to", "")
             else:
-                trip.set("to", to_edge_id)
+                if type is 'drop-off':
+                    trip.set("to", from_edge_id)
+                else:
+                    trip.set("to", to_edge_id)
                 etree.SubElement(trip, "stop")
                 parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
                 trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
                 trip.stop.set("duration", str(duration))
                 stat = 'into'
-            from_edge_id = ODs["origins"][weighted_choice(ODs["origin_weights"])]
-            trip.set("from", from_edge_id)
 
-        # trip inside polygon
+        #### trip inside polygon
+        #
+        ####
         else:
             from_edge = getClosestEdge(float(data["from_x"]) + offset[0], float(data["from_y"]) + offset[1], net,
                                        radius)
@@ -312,7 +331,10 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas, location):
                 flag = False
                 trip.set("to", "")
             else:
-                trip.set("to", to_edge_id)
+                if type is 'drop-off':
+                    trip.set("to", from_edge_id)
+                else:
+                    trip.set("to", to_edge_id)
                 etree.SubElement(trip, "stop")
                 parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
                 trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
@@ -345,7 +367,7 @@ def getOD(ODFile):
         destination_weights.append(float(weight))
     return {"origins": origins, "origin_weights": origin_weights, "destinations": destinations, "destination_weights": destination_weights}
 
-def createTripXML(data, parkingAreas_on, parkingAreas_off, dataset, on_percentage):
+def createTripXML(trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop_off_percentage):
     """
        Create an XML file
     """
@@ -371,15 +393,27 @@ def createTripXML(data, parkingAreas_on, parkingAreas_off, dataset, on_percentag
     out = 0
     into = 0
     within = 0
-    for trip in data:
+    for trip in trips_sorted:
+        if trip["mode"] is 'walk':
+            continue
         rnd = np.random.random()
-        if rnd <= on_percentage:
+        duration = int(trip["to_end_time"]) - int(trip["from_end_time"]) # trip duration
+        # on-street drop-off
+        if rnd <= drop_off_percentage:
             parkingAreas = parkingAreas_on
-            location = 'on'
+            type = 'drop-off'
+            duration = 20
         else:
-            parkingAreas = parkingAreas_off
-            location = 'off'
-        trip, flag, stat = createTrip(trip, net, BBox, offset, ODs, parkingAreas, location)
+            # off-street parking
+            if duration >= on_off_parking_threshold:
+                parkingAreas = parkingAreas_off
+                type = 'off'
+            # on-street parking
+            else:
+                parkingAreas = parkingAreas_on
+                type = 'on'
+        trip, flag, stat = createTrip(trip, net, BBox, offset, ODs, parkingAreas, type, duration)
+
         if flag:
             root.append(trip)
         if count % 100 == 0:
@@ -409,7 +443,7 @@ def createTripXML(data, parkingAreas_on, parkingAreas_off, dataset, on_percentag
                              encoding="utf-8")
 
     try:
-        with open('../cities/fairfield/trip_' + dataset + '_with_' + str(on_percentage) + '_on_street.xml', "wb") as xml_writer:
+        with open('../cities/fairfield/trip_' + dataset + '_with_' + str(drop_off_percentage) + '_drop-off.xml', "wb") as xml_writer:
             xml_writer.write(obj_xml)
         xml_writer.close()
         print("TripXML created successfully!")
@@ -562,7 +596,7 @@ if __name__ == "__main__":
     generateParkingRerouter(parkingAreas_on, parkingAreas_off, edges)
 
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    dataset = '0.01'
+    dataset = 'all_7'
     trips = parseXML('../cities/fairfield/fairfield_plans_' + dataset + '.xml', flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False
 
     trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
@@ -572,7 +606,10 @@ if __name__ == "__main__":
     createAndSaveTripXML(trips_sorted_randomized, "originaltrip_randomized.xml")
 
     # createVehicleXML(trips_sorted)
-    on_percentage = 0.1
-    createTripXML(trips_sorted, parkingAreas_on, parkingAreas_off, dataset, on_percentage)
+    drop_off_percentage = 0.25
+    createTripXML(trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop_off_percentage)
+
+    # close traci connection
     traci.close()
+    # exit qgis
     qgs.exitQgis()
