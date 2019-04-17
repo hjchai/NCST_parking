@@ -1,0 +1,87 @@
+<ods>
+  <origin id="-27570802#1"    weight="1"> </origin>
+  <origin id="-27570786#2"    weight="1"> </origin>
+  <origin id="-254297762#2"   weight="2"> </origin>
+  <origin id="-204967525"     weight="2"> </origin>
+  <origin id="8916767#0"      weight="1"> </origin>
+  <origin id="-48211062#12"   weight="1"> </origin>
+  <origin id="-206662304#13"  weight="1"> </origin>
+  <origin id="-206679802#4"   weight="1"> </origin>
+  <origin id="-35977367#2"    weight="1"> </origin>
+  <origin id="-24335483#9"    weight="1"> </origin>
+  <origin id="224384035#0"    weight="1"> </origin>
+  <origin id="27398045#1"     weight="1"> </origin>
+  <origin id="-144346316#5"   weight="1"> </origin>
+  <origin id="254396707#6"    weight="2"> </origin>
+  <origin id="86303763#0"     weight="2"> </origin>
+  <origin id="144489137#0"    weight="2"> </origin>
+  <origin id="-254758120#3"   weight="1"> </origin>
+  <origin id="225806031#0"    weight="2"> </origin>
+  <origin id="-133781749"     weight="1"> </origin>
+  <origin id="133733582#2"    weight="1"> </origin>
+  <origin id="142972028#1"    weight="2"> </origin>
+  <origin id="23959829#0"     weight="2"> </origin>
+  <origin id="111089307#0"    weight="1"> </origin>
+  <origin id="-24310636#2"    weight="2"> </origin>
+  <origin id="191296172#0"    weight="2"> </origin>
+  <origin id="-8916048"       weight="1"> </origin>
+  <origin id="-27029200#2"    weight="1"> </origin>
+  <origin id="-27029204"      weight="1"> </origin>
+  <origin id="8915254"        weight="1"> </origin>
+  <origin id="31129765"       weight="5"> </origin>
+  <origin id="27167762"       weight="1"> </origin>
+  <origin id="-27167281#1"    weight="1"> </origin>
+  <origin id="84823308"       weight="1"> </origin>
+  <origin id="-23883761"      weight="1"> </origin>
+  <origin id="-23883760"      weight="1"> </origin>
+  <origin id="8916792"        weight="2"> </origin>
+  <origin id="123867455"      weight="2"> </origin>
+  <origin id="-160313263#1"   weight="2"> </origin>
+  <origin id="-133755930#1"   weight="2"> </origin>
+  <origin id="90077241"       weight="10"> </origin>
+
+  <destination id="27570802#1"    weight="1"> </destination>
+  <destination id="27570786#2"    weight="1"> </destination>
+  <destination id="254297762#2"   weight="2"> </destination>
+  <destination id="204967525"     weight="2"> </destination>
+  <destination id="-8916767#0"    weight="1"> </destination>
+  <destination id="48211062#12"   weight="1"> </destination>
+  <destination id="206662304#13"  weight="1"> </destination>
+  <destination id="206679802#4"   weight="1"> </destination>
+  <destination id="35977367#2"    weight="1"> </destination>
+  <destination id="24335483#9"    weight="1"> </destination>
+  <destination id="30035682#1"    weight="1"> </destination>
+  <destination id="254756525#26"  weight="2"> </destination>
+  <destination id="144346316#5"   weight="1"> </destination>
+  <destination id="100400947#11"  weight="2"> </destination>
+  <destination id="254297763#7"   weight="1"> </destination>
+  <destination id="91181767"      weight="2"> </destination>
+  <destination id="254758120#3"   weight="1"> </destination>
+  <destination id="254448252#1"   weight="2"> </destination>
+  <destination id="133781749"     weight="1"> </destination>
+  <destination id="-133733582#3"  weight="1"> </destination>
+  <destination id="8917756"       weight="1"> </destination>
+  <destination id="225847519#4"   weight="2"> </destination>
+  <destination id="204963631"     weight="2"> </destination>
+  <destination id="24335441"      weight="2"> </destination>
+  <destination id="24310636#2"    weight="2"> </destination>
+  <destination id="-191296172#0"  weight="2"> </destination>
+  <destination id="8916048"       weight="1"> </destination>
+  <destination id="27029200#2"    weight="1"> </destination>
+  <destination id="27029204"      weight="1"> </destination>
+  <destination id="154966358"     weight="5"> </destination>
+  <destination id="8915263"       weight="1"> </destination>
+  <destination id="-8916792"      weight="2"> </destination>
+  <destination id="30454437"      weight="2"> </destination>
+  <destination id="8918874"       weight="1"> </destination>
+  <destination id="52432936#1"    weight="2"> </destination>
+  <destination id="133755930#1"   weight="2"> </destination>
+  <destination id="50690291#1"    weight="10"> </destination>
+
+
+
+  <pg id="P1">
+  </pg>
+  <pg id="P2">
+  </pg>
+</ods>

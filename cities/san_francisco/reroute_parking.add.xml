@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on Thu 21 Feb 2019 04:20:44 PM PST by Eclipse SUMO netedit Version v1_0_1+0000-b43a3e4816
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="hello_trimmed.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="hello_trimmed.net.xml"/>
+    </output>
+
+    <processing>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-internal-links value="true"/>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="0"/>
+        <junctions.limit-turn-speed value="-1"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="false"/>
+    </pedestrian>
+
+</configuration>
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+
+   	<rerouter id="myRerouter" edges="91182067 8919205#0 8919205#12 8919205#16">
+    	<interval begin="0" end="2000">
+        	<parkingAreaReroute id="parkingArea_254971056#1_0_25"/>
+        	<parkingAreaReroute id="parkingArea_8919205#16_0_27"/>
+      	</interval>
+   	</rerouter>
+
+</additional>

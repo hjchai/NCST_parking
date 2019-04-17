@@ -307,7 +307,10 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas, type, duration):
                 else:
                     trip.set("to", to_edge_id)
                 etree.SubElement(trip, "stop")
-                parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
+                try:
+                    parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
+                except Exception as e:
+                    print("Bug here!!!!"+str(e))
                 trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
                 trip.stop.set("duration", str(duration))
                 stat = 'into'
@@ -367,7 +370,7 @@ def getOD(ODFile):
         destination_weights.append(float(weight))
     return {"origins": origins, "origin_weights": origin_weights, "destinations": destinations, "destination_weights": destination_weights}
 
-def createTripXML(trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop_off_percentage):
+def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop_off_percentage):
     """
        Create an XML file
     """
@@ -377,7 +380,7 @@ def createTripXML(trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop
     root = objectify.fromstring(xml)
 
     # read sumo network
-    net = sumolib.net.readNet('../cities/fairfield/fairfield.net.xml')
+    net = sumolib.net.readNet('../cities/' + city + '/' + city + '.net.xml')
 
     # map offset. sumolib net uses offset to convert utm to local coordinate
     offset = net.getLocationOffset()
@@ -386,7 +389,7 @@ def createTripXML(trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop
     BBox = net.getBBoxXY() #[(bottom_left_X, bottom_left_Y), (top_right_X, top_right_Y)]
 
     # read OD information
-    ODFile = "../cities/fairfield/fairfield.od.xml"
+    ODFile = "../cities/" + city + "/" + city + ".od.xml"
     ODs = getOD(ODFile)
 
     count = 0
@@ -443,7 +446,7 @@ def createTripXML(trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop
                              encoding="utf-8")
 
     try:
-        with open('../cities/fairfield/trip_' + dataset + '_with_' + str(drop_off_percentage) + '_drop-off.xml', "wb") as xml_writer:
+        with open('../cities/' + city + '/trip_' + dataset + '_with_' + str(drop_off_percentage) + '_drop-off.xml', "wb") as xml_writer:
             xml_writer.write(obj_xml)
         xml_writer.close()
         print("TripXML created successfully!")
@@ -492,8 +495,8 @@ def randomPointInFeature(feature):
         x_coord = random.uniform(xmin, xmax)
         y_coord = random.uniform(ymin, ymax)
         pt = QgsPointXY(x_coord, y_coord)
-        tmp_geom = QgsGeometry.fromPointXY(pt)
-        if tmp_geom.contains(pt):
+        #tmp_geom = QgsGeometry.fromPointXY(pt)
+        if feature.contains(pt):
             p += 1
             return pt
 
@@ -510,6 +513,7 @@ def randomizeOriginDestination(trips_sorted, features, xform, xform_reverse):
         fromPointGeometry = QgsGeometry.fromPointXY(fromPoint_tr)
         toPoint_tr = xform_reverse.transform(to_x, to_y)
         toPointGeometry = QgsGeometry.fromPointXY(toPoint_tr)
+        # for from or to node falling inside a feature, we will randomly select a from or to coordinate for it
         for feature in features:
             if feature.contains(fromPointGeometry):
                 point_rand = randomPointInFeature(feature)
@@ -527,13 +531,13 @@ def randomizeOriginDestination(trips_sorted, features, xform, xform_reverse):
 
     return trips_sorted_randomized
 
-def generateParkingRerouter(parkingAreas_on, parkingAreas_off, edges):
+def generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, edges):
     edges_str = ''
     for edge in edges:
         edges_str = edges_str + edge.getID() + ' '
     edges_str = edges_str[:-1]
 
-    with open("../cities/fairfield/reroute_parking.xml", "w") as xml_writer:
+    with open("../cities/" + city + "/reroute_parking.xml", "w") as xml_writer:
         xml_writer.write('''<?xml version="1.0" encoding="UTF-8"?>\n''')
         xml_writer.write('''<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">\n''')
         for parkingAreas, rerouter_id in zip([parkingAreas_on, parkingAreas_off], ['rerouter_on', 'rerouter_off']):
@@ -562,7 +566,12 @@ def generateParkingRerouter(parkingAreas_on, parkingAreas_off, edges):
 
 
 if __name__ == "__main__":
-    traci.start(["sumo", "-c", "../cities/fairfield/dummy.sumo.cfg"]) #initialize connect to traci using a dummy sumo cfg file
+
+    flags_dict = {'all_7': True, '0.01': False, '0.05': False}
+    city = 'san_francisco'
+    dataset = '0.01'
+
+    traci.start(["sumo", "-c", "../cities/" + city + "/dummy.sumo.cfg"]) #initialize connect to traci using a dummy sumo cfg file
 
     # supply path to qgis install location
     QgsApplication.setPrefixPath('/usr', True)
@@ -573,7 +582,7 @@ if __name__ == "__main__":
 
     # load providers
     qgs.initQgis()
-    layer = QgsVectorLayer("../cities/fairfield/shp/selected_fairfield.shp", "", "ogr") # ../Caroline_NCST_Data/Communities_of_Concern_TAZ.shp
+    layer = QgsVectorLayer("../cities/" + city + "/shp/" + city + ".shp", "", "ogr")
     if not layer.isValid():
         raise Exception("Layer failed to load!")
 
@@ -589,15 +598,13 @@ if __name__ == "__main__":
         # retrieve every feature with its geometry and attributes
         features_geometry.append(feature.geometry())
 
-    parkingAreas_on = parseParking('../cities/fairfield/on-parking.add.xml')
-    parkingAreas_off = parseParking('../cities/fairfield/off-parking.add.xml')
-    net = sumolib.net.readNet('../cities/fairfield/fairfield.net.xml')
+    parkingAreas_on = parseParking("../cities/" + city + "/on_parking.add.xml")
+    parkingAreas_off = parseParking('../cities/' + city + '/off_parking.add.xml')
+    net = sumolib.net.readNet('../cities/' + city + '/' + city + '.net.xml')
     edges = net.getEdges()
-    generateParkingRerouter(parkingAreas_on, parkingAreas_off, edges)
+    generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, edges)
 
-    flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    dataset = 'all_7'
-    trips = parseXML('../cities/fairfield/fairfield_plans_' + dataset + '.xml', flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False
+    trips = parseXML('../cities/' + city + '/' + city + '_plans_' + dataset + '.xml', flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False
 
     trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
     createAndSaveTripXML(trips_sorted, "originaltrip.xml")
@@ -607,7 +614,7 @@ if __name__ == "__main__":
 
     # createVehicleXML(trips_sorted)
     drop_off_percentage = 0.25
-    createTripXML(trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop_off_percentage)
+    createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop_off_percentage)
 
     # close traci connection
     traci.close()

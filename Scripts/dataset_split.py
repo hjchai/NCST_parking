@@ -56,11 +56,11 @@ def split_XML(source_dataset, target_dataset, ext, xform_reverse, is_all):
 
 if __name__ == "__main__":
     # specify city information
-    city_shapefile = "../cities/fairfield/shp/selected_fairfield.shp"
+    city_shapefile = "../cities/san_francisco/shp/downtown_taz.shp"
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    dataset = 'all_7'
+    dataset = '0.01'
     source_dataset = '../Caroline_NCST_Data/Scenario_1/matsim_input/plans_' + dataset + '.xml'
-    target_dataset = '../cities/fairfield/fairfield_plans_' + dataset + '.xml'
+    target_dataset = '../cities/san_francisco/san_francisco_plans_' + dataset + '.xml'
 
     # supply path to qgis install location
     QgsApplication.setPrefixPath('/usr', True)
