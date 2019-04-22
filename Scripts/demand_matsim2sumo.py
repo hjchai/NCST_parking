@@ -2,6 +2,7 @@ from lxml import etree, objectify
 import random
 import numpy as np
 import operator
+import logging
 
 try:
     from StringIO import StringIO
@@ -24,7 +25,7 @@ from qgis.core import *
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
-from parking import parseParking
+import parking as pk
 
 drop_off_duration = 20 # in second
 on_off_parking_threshold = 7200 # 2 hours in seconds
@@ -220,22 +221,30 @@ def weighted_choice(weights):
         if rnd < total:
             return i
 
-def getParkedEdge(to_edge_id, parkingAreas):
-    # the destination edge has parkingarea
-    if to_edge_id in parkingAreas:
-        parkedEdge = to_edge_id
-    # otherwise
+def getParkedEdge(to_edge_id, parkingAreas, TAZ_parking):
+    if TAZ_parking is None:
+        # the destination edge has parkingarea
+        if to_edge_id in parkingAreas:
+            parkedEdge = to_edge_id
+        # otherwise
+        else:
+            distance = float("inf")
+            for parkingArea in parkingAreas:
+                edge = parkingArea  # edge id
+                tmp_dist = traci.simulation.getDistanceRoad(edge, 0, to_edge_id, 0, True)
+                if tmp_dist < distance:
+                    distance = tmp_dist
+                    parkedEdge = edge
     else:
-        distance = float("inf")
-        for parkingArea in parkingAreas:
-            edge = parkingArea  # edge id
-            tmp_dist = traci.simulation.getDistanceRoad(edge, 0, to_edge_id, 0, True)
-            if tmp_dist < distance:
-                distance = tmp_dist
-                parkedEdge = edge
+        weights = []
+        for parking in TAZ_parking:
+            weights.append(int(parking.attrib["roadsideCapacity"]))
+        i = weighted_choice(weights)
+        lane = TAZ_parking[i].attrib["lane"]
+        parkedEdge = lane.split('_')[0]
     return parkedEdge
 
-def createTrip(data, net, BBox, offset, ODs, parkingAreas, type, duration):
+def createTrip(data, net, BBox, offset, ODs, parkingAreas, type, duration, features_geometry, xform_reverse, TAZ_parking_dict):
     """
         Create a trip XML element
     """
@@ -246,17 +255,17 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas, type, duration):
     trip.set("type", "passenger")
     trip.set("color", "1,1,0")
 
+    to_tr = xform_reverse.transform(float(data["to_x"]), float(data["to_y"]))
+    to_pt_tr = QgsGeometry.fromPointXY(to_tr)
+    index = 0
+    for feature_geometry in features_geometry:
+        if feature_geometry.contains(to_pt_tr):
+            continue
+        index += 1
+
     point_from = Point(float(data["from_x"])+offset[0], float(data["from_y"])+offset[1])
     point_to = Point(float(data["to_x"])+offset[0], float(data["to_y"])+offset[1])
     polygon = Polygon([(BBox[0][0], BBox[0][1]), (BBox[1][0], BBox[0][1]), (BBox[1][0], BBox[1][1]), (BBox[0][0], BBox[1][1])])
-
-    # # set parking duration based on parking type
-    # # on-street parking: duration = 20 seconds
-    # # off-street parking: duration is between 2hrs to 6PM-start_time
-    # if location is 'on':
-    #     duration = 20
-    # else:
-    #     duration = np.random.randint(7200, max(7200, 64800 - int(data['from_end_time']))+1)
 
     stat = ''
 
@@ -277,17 +286,18 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas, type, duration):
                 trip.set("from", "")
             else:
                 trip.set("from", from_edge_id)
-                if type is 'drop-off':
+                if type is 'drop-off' and data["to_type"] !='home':
                     etree.SubElement(trip, "stop")
                     parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
                     trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
                     trip.stop.set("duration", str(duration))
                 stat = 'out'
             # need to make sure there is a path going back to from node
-            if type is 'drop-off':
+            if type is 'drop-off' and data["to_type"] != 'home':
                 trip.set("to", from_edge_id)
             else:
                 trip.set("to", to_edge_id)
+            trip.set("direction", "out")
 
         #### trip going into polygon:
         #
@@ -302,17 +312,16 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas, type, duration):
                 flag = False
                 trip.set("to", "")
             else:
-                if type is 'drop-off':
+                if type is 'drop-off' and data["to_type"] != 'home':
                     trip.set("to", from_edge_id)
                 else:
                     trip.set("to", to_edge_id)
-                etree.SubElement(trip, "stop")
-                try:
-                    parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
-                except Exception as e:
-                    print("Bug here!!!!"+str(e))
-                trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
-                trip.stop.set("duration", str(duration))
+                if data["to_type"] != 'home':
+                    etree.SubElement(trip, "stop")
+                    parkedEdge = getParkedEdge(to_edge_id, parkingAreas, TAZ_parking_dict[str(index)])
+                    trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
+                    trip.stop.set("duration", str(duration))
+                trip.set("direction", "into")
                 stat = 'into'
 
         #### trip inside polygon
@@ -334,14 +343,16 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas, type, duration):
                 flag = False
                 trip.set("to", "")
             else:
-                if type is 'drop-off':
+                if type is 'drop-off'and data["to_type"] != 'home':
                     trip.set("to", from_edge_id)
                 else:
                     trip.set("to", to_edge_id)
-                etree.SubElement(trip, "stop")
-                parkedEdge = getParkedEdge(to_edge_id, parkingAreas)
-                trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
-                trip.stop.set("duration", str(duration))
+                if data["to_type"] != 'home':
+                    etree.SubElement(trip, "stop")
+                    parkedEdge = getParkedEdge(to_edge_id, parkingAreas, TAZ_parking_dict[str(index)])
+                    trip.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
+                    trip.stop.set("duration", str(duration))
+                trip.set("direction", "within")
                 stat = 'within'
     else:
         flag = False
@@ -404,18 +415,21 @@ def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, dataset
         # on-street drop-off
         if rnd <= drop_off_percentage:
             parkingAreas = parkingAreas_on
+            TAZ_parking_dict = TAZ_on_parking_dict
             type = 'drop-off'
             duration = 20
         else:
             # off-street parking
             if duration >= on_off_parking_threshold:
                 parkingAreas = parkingAreas_off
+                TAZ_parking_dict = TAZ_off_parking_dict
                 type = 'off'
             # on-street parking
             else:
                 parkingAreas = parkingAreas_on
+                TAZ_parking_dict = TAZ_on_parking_dict
                 type = 'on'
-        trip, flag, stat = createTrip(trip, net, BBox, offset, ODs, parkingAreas, type, duration)
+        trip, flag, stat = createTrip(trip, net, BBox, offset, ODs, parkingAreas, type, duration, features_geometry, xform_reverse, TAZ_parking_dict)
 
         if flag:
             root.append(trip)
@@ -501,9 +515,11 @@ def randomPointInFeature(feature):
             return pt
 
 def randomizeOriginDestination(trips_sorted, features, xform, xform_reverse):
-    trips_sorted_randomized = trips_sorted
+    trips_sorted_randomized = []
     count = 0
-    for trip in trips_sorted_randomized:
+    for trip in trips_sorted:
+        if trip["mode"] == "walk":
+            continue
         from_x = float(trip["from_x"])
         from_y = float(trip["from_y"])
         to_x = float(trip["to_x"])
@@ -528,6 +544,8 @@ def randomizeOriginDestination(trips_sorted, features, xform, xform_reverse):
         count += 1
         if count%100 is 0:
             print("Trip: {}.".format(count))
+
+        trips_sorted_randomized.append(trip)
 
     return trips_sorted_randomized
 
@@ -563,13 +581,13 @@ def generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, edges):
                                      encoding="utf-8").decode("utf-8")
             xml_writer.write(obj_xml)
         xml_writer.write('''</additional>''')
-
+    xml_writer.close()
 
 if __name__ == "__main__":
 
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    city = 'san_francisco'
-    dataset = '0.01'
+    city = 'fairfield'
+    dataset = 'all_7'
 
     traci.start(["sumo", "-c", "../cities/" + city + "/dummy.sumo.cfg"]) #initialize connect to traci using a dummy sumo cfg file
 
@@ -598,23 +616,27 @@ if __name__ == "__main__":
         # retrieve every feature with its geometry and attributes
         features_geometry.append(feature.geometry())
 
-    parkingAreas_on = parseParking("../cities/" + city + "/on_parking.add.xml")
-    parkingAreas_off = parseParking('../cities/' + city + '/off_parking.add.xml')
+    parkingAreas_on = pk.parseParking("../cities/" + city + "/on_parking.add.xml")
+    parkingAreas_off = pk.parseParking('../cities/' + city + '/off_parking.add.xml')
+
     net = sumolib.net.readNet('../cities/' + city + '/' + city + '.net.xml')
     edges = net.getEdges()
     generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, edges)
 
+    TAZ_on_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_on, net, xform_reverse)
+    TAZ_off_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_off, net, xform_reverse)
+
     trips = parseXML('../cities/' + city + '/' + city + '_plans_' + dataset + '.xml', flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False
 
     trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
-    createAndSaveTripXML(trips_sorted, "originaltrip.xml")
+    createAndSaveTripXML(trips_sorted, "../cities/" + city + "/originaltrip.xml")
 
     trips_sorted_randomized = randomizeOriginDestination(trips_sorted, features_geometry, xform, xform_reverse)
-    createAndSaveTripXML(trips_sorted_randomized, "originaltrip_randomized.xml")
+    createAndSaveTripXML(trips_sorted_randomized, "../cities/" + city + "/originaltrip_with_randomizedOD.xml")
 
     # createVehicleXML(trips_sorted)
-    drop_off_percentage = 0.25
-    createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop_off_percentage)
+    drop_off_percentage = 0.5
+    createTripXML(city, trips_sorted_randomized, parkingAreas_on, parkingAreas_off, dataset, drop_off_percentage)
 
     # close traci connection
     traci.close()
