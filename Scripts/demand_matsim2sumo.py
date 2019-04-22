@@ -57,6 +57,7 @@ def parseXML(xmlfile, is_all):
                     plan = person[0]
 
                 num_trips = int((len(plan.getchildren())-1)/2)
+                home_loc_x, home_loc_y = '', ''
                 for num in range(num_trips):
                     trip = {}
                     from_activity = plan.getchildren()[2*num]
@@ -78,6 +79,9 @@ def parseXML(xmlfile, is_all):
 
                     mode = leg.attrib["mode"]
 
+                    if from_type == 'home':
+                        home_loc_x, home_loc_y = from_x, from_y
+
                     trip["trip_id"] = str(trip_id)
                     trip_id += 1
                     trip["person"] = id
@@ -91,6 +95,8 @@ def parseXML(xmlfile, is_all):
                     trip["to_end_time"] = str(get_sec(to_end_time))
                     trip["mode"] = mode
                     trip["vot"] = vot
+                    trip["home_loc_x"] = home_loc_x
+                    trip["home_loc_y"] = home_loc_y
                     trips.append(trip)
     return trips
 
@@ -111,6 +117,8 @@ def generateTrip(data):
     trip.set("to_y", data["to_y"])
     trip.set("from_end_time", data["from_end_time"])
     trip.set("to_end_time", data["to_end_time"])
+    trip.set("home_loc_x", data["home_loc_x"])
+    trip.set("home_loc_y", data["home_loc_y"])
     return trip
 
 def createAndSaveTripXML(data, filename):
@@ -140,55 +148,6 @@ def createAndSaveTripXML(data, filename):
             xml_writer.write(obj_xml)
         xml_writer.close()
         print("{} created successfully!".format(filename))
-    except IOError:
-        pass
-
-def createVehicle(data):
-    """
-        Create a vehicle XML element
-    """
-    vehicle= objectify.Element("trip")
-    vehicle.set("person", data["person"])
-    vehicle.set("mode", data["mode"])
-    vehicle.set("vot", data["vot"])
-    vehicle.set("from_type", data["from_type"])
-    vehicle.set("from_x", data["from_x"])
-    vehicle.set("from_y", data["from_y"])
-    vehicle.set("to_type", data["to_type"])
-    vehicle.set("to_x", data["to_x"])
-    vehicle.set("to_y", data["to_y"])
-    vehicle.set("from_end_time", data["from_end_time"])
-    vehicle.set("to_end_time", data["to_end_time"])
-    return vehicle
-
-def createVehicleXML(data):
-    """
-       Create an XML file
-    """
-    xml = '''<?xml version="1.0" encoding="UTF-8"?><addNode></addNode>'''
-    xml = bytes(bytearray(xml, encoding='utf-8'))
-
-    root = objectify.fromstring(xml)
-    root.set("id", "add_00")
-
-    for trip in data:
-        root.append(createOriginalTrip(trip))
-
-    # remove lxml annotation
-    objectify.deannotate(root)
-    etree.cleanup_namespaces(root)
-
-    # create the xml string
-    obj_xml = etree.tostring(root,
-                             pretty_print=True,
-                             xml_declaration=True,
-                             encoding="utf-8")
-
-    try:
-        with open("addNode.xml", "wb") as xml_writer:
-            xml_writer.write(obj_xml)
-        xml_writer.close()
-        print("VehicleXML created successfully!")
     except IOError:
         pass
 
@@ -381,7 +340,7 @@ def getOD(ODFile):
         destination_weights.append(float(weight))
     return {"origins": origins, "origin_weights": origin_weights, "destinations": destinations, "destination_weights": destination_weights}
 
-def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, dataset, drop_off_percentage):
+def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, dataset, drop_off_percentage, scenario_dir):
     """
        Create an XML file
     """
@@ -414,8 +373,8 @@ def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, dataset
         duration = int(trip["to_end_time"]) - int(trip["from_end_time"]) # trip duration
         # on-street drop-off
         if rnd <= drop_off_percentage:
-            parkingAreas = parkingAreas_on
-            TAZ_parking_dict = TAZ_on_parking_dict
+            parkingAreas = parkingAreas_drop_off
+            TAZ_parking_dict = TAZ_drop_off_parking_dict
             type = 'drop-off'
             duration = 20
         else:
@@ -460,43 +419,14 @@ def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, dataset
                              encoding="utf-8")
 
     try:
-        with open('../cities/' + city + '/trip_' + dataset + '_with_' + str(drop_off_percentage) + '_drop-off.xml', "wb") as xml_writer:
+        with open(scenario_dir + '/trip_' + dataset + '_with_' + str(drop_off_percentage) + '_drop-off.xml', "wb") as xml_writer:
             xml_writer.write(obj_xml)
         xml_writer.close()
         print("TripXML created successfully!")
     except IOError:
         pass
 
-# def readFeaturesFromShape(shapefile):
-#     # supply path to qgis install location
-#     QgsApplication.setPrefixPath('/usr', True)
-#
-#     # create a reference to the QgsApplication, setting the
-#     # second argument to False disables the GUI
-#     qgs = QgsApplication([], False)
-#
-#     # load providers
-#     qgs.initQgis()
-#     layer = QgsVectorLayer(shapefile, "", "ogr")
-#     if not layer.isValid():
-#         print("Layer failed to load!")
-#
-#     # create projection
-#     crsSrc = QgsCoordinateReferenceSystem("EPSG:4326")  # WGS 84
-#     crsDest = QgsCoordinateReferenceSystem("EPSG:32610")  # WGS 84 / UTM zone 10N
-#     xform = QgsCoordinateTransform(crsSrc, crsDest, QgsProject.instance())
-#     xform_reverse = QgsCoordinateTransform(crsDest, crsSrc, QgsProject.instance())
-#
-#     features = layer.getFeatures()
-#
-#     count = 0
-#     for feature in features:
-#         # retrieve every feature with its geometry and attributes
-#         feature = feature.geometry()
-#
-#     #qgs.exitQgis()
-#
-#     return features, xform, xform_reverse
+
 
 def randomPointInFeature(feature):
     bounds = feature.boundingBox()
@@ -549,7 +479,7 @@ def randomizeOriginDestination(trips_sorted, features, xform, xform_reverse):
 
     return trips_sorted_randomized
 
-def generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, edges):
+def generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, edges):
     edges_str = ''
     for edge in edges:
         edges_str = edges_str + edge.getID() + ' '
@@ -558,7 +488,7 @@ def generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, edges):
     with open("../cities/" + city + "/reroute_parking.xml", "w") as xml_writer:
         xml_writer.write('''<?xml version="1.0" encoding="UTF-8"?>\n''')
         xml_writer.write('''<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">\n''')
-        for parkingAreas, rerouter_id in zip([parkingAreas_on, parkingAreas_off], ['rerouter_on', 'rerouter_off']):
+        for parkingAreas, rerouter_id in zip([parkingAreas_on, parkingAreas_off, parkingAreas_drop_off], ['rerouter_on', 'rerouter_off', 'rerouter_drop_off']):
             rerouter = objectify.Element("rerouter")
             rerouter.set("id", rerouter_id)
             rerouter.set("edges", edges_str)
@@ -587,7 +517,10 @@ if __name__ == "__main__":
 
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
     city = 'fairfield'
-    dataset = 'all_7'
+    dataset = '0.01'
+    scenario_dir = "../cities/" + city + "/Scenario_Set_1"
+    drop_off_only_percentage = 0 # percentage of on-street parking dedicated to drop-off only
+    drop_off_percentage = 0.5 # percentage of drop-off trips
 
     traci.start(["sumo", "-c", "../cities/" + city + "/dummy.sumo.cfg"]) #initialize connect to traci using a dummy sumo cfg file
 
@@ -616,14 +549,20 @@ if __name__ == "__main__":
         # retrieve every feature with its geometry and attributes
         features_geometry.append(feature.geometry())
 
-    parkingAreas_on = pk.parseParking("../cities/" + city + "/on_parking.add.xml")
-    parkingAreas_off = pk.parseParking('../cities/' + city + '/off_parking.add.xml')
+    parkingAreas_drop_off = pk.parseParking("../cities/" + city + "/on_parking.add.xml") # parking spots that are used for drop-off traffic
+    parkingAreas_on_OBJ = pk.splitDropoffAndOnParking("../cities/" + city + "/on_parking.add.xml", drop_off_only_percentage)
+    with open(scenario_dir + "/on_parking_" + str(1 - drop_off_only_percentage) + ".add.xml", "w") as f_obj:
+        parkingAreas_on_xml = etree.tostring(parkingAreas_on_OBJ, pretty_print=True, xml_declaration=False, encoding="utf-8").decode("utf-8")
+        f_obj.write(parkingAreas_on_xml)
+    parkingAreas_on = pk.parseParking(scenario_dir + "/on_parking_" + str(1 - drop_off_only_percentage) + ".add.xml") # parking spots that are used for both drop-off traffic and on-street parking traffic
+    parkingAreas_off = pk.parseParking('../cities/' + city + '/off_parking.add.xml') # parking spots that are used for off street parking
 
     net = sumolib.net.readNet('../cities/' + city + '/' + city + '.net.xml')
     edges = net.getEdges()
-    generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, edges)
+    generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, edges)
 
     TAZ_on_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_on, net, xform_reverse)
+    TAZ_drop_off_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_drop_off, net, xform_reverse)
     TAZ_off_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_off, net, xform_reverse)
 
     trips = parseXML('../cities/' + city + '/' + city + '_plans_' + dataset + '.xml', flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False
@@ -635,10 +574,90 @@ if __name__ == "__main__":
     createAndSaveTripXML(trips_sorted_randomized, "../cities/" + city + "/originaltrip_with_randomizedOD.xml")
 
     # createVehicleXML(trips_sorted)
-    drop_off_percentage = 0.5
-    createTripXML(city, trips_sorted_randomized, parkingAreas_on, parkingAreas_off, dataset, drop_off_percentage)
+    createTripXML(city, trips_sorted_randomized, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, dataset, drop_off_percentage, scenario_dir)
 
     # close traci connection
     traci.close()
     # exit qgis
     qgs.exitQgis()
+
+
+# def readFeaturesFromShape(shapefile):
+#     # supply path to qgis install location
+#     QgsApplication.setPrefixPath('/usr', True)
+#
+#     # create a reference to the QgsApplication, setting the
+#     # second argument to False disables the GUI
+#     qgs = QgsApplication([], False)
+#
+#     # load providers
+#     qgs.initQgis()
+#     layer = QgsVectorLayer(shapefile, "", "ogr")
+#     if not layer.isValid():
+#         print("Layer failed to load!")
+#
+#     # create projection
+#     crsSrc = QgsCoordinateReferenceSystem("EPSG:4326")  # WGS 84
+#     crsDest = QgsCoordinateReferenceSystem("EPSG:32610")  # WGS 84 / UTM zone 10N
+#     xform = QgsCoordinateTransform(crsSrc, crsDest, QgsProject.instance())
+#     xform_reverse = QgsCoordinateTransform(crsDest, crsSrc, QgsProject.instance())
+#
+#     features = layer.getFeatures()
+#
+#     count = 0
+#     for feature in features:
+#         # retrieve every feature with its geometry and attributes
+#         feature = feature.geometry()
+#
+#     #qgs.exitQgis()
+#
+#     return features, xform, xform_reverse
+
+# def createVehicle(data):
+#     """
+#         Create a vehicle XML element
+#     """
+#     vehicle= objectify.Element("trip")
+#     vehicle.set("person", data["person"])
+#     vehicle.set("mode", data["mode"])
+#     vehicle.set("vot", data["vot"])
+#     vehicle.set("from_type", data["from_type"])
+#     vehicle.set("from_x", data["from_x"])
+#     vehicle.set("from_y", data["from_y"])
+#     vehicle.set("to_type", data["to_type"])
+#     vehicle.set("to_x", data["to_x"])
+#     vehicle.set("to_y", data["to_y"])
+#     vehicle.set("from_end_time", data["from_end_time"])
+#     vehicle.set("to_end_time", data["to_end_time"])
+#     return vehicle
+
+# def createVehicleXML(data):
+#     """
+#        Create an XML file
+#     """
+#     xml = '''<?xml version="1.0" encoding="UTF-8"?><addNode></addNode>'''
+#     xml = bytes(bytearray(xml, encoding='utf-8'))
+#
+#     root = objectify.fromstring(xml)
+#     root.set("id", "add_00")
+#
+#     for trip in data:
+#         root.append(createOriginalTrip(trip))
+#
+#     # remove lxml annotation
+#     objectify.deannotate(root)
+#     etree.cleanup_namespaces(root)
+#
+#     # create the xml string
+#     obj_xml = etree.tostring(root,
+#                              pretty_print=True,
+#                              xml_declaration=True,
+#                              encoding="utf-8")
+#
+#     try:
+#         with open("addNode.xml", "wb") as xml_writer:
+#             xml_writer.write(obj_xml)
+#         xml_writer.close()
+#         print("VehicleXML created successfully!")
+#     except IOError:
+#         pass

@@ -1,6 +1,7 @@
 from lxml import etree, objectify
 from qgis.core import *
 import sys
+import numpy as np
 
 def parseParking(xmlfile):
     parkingAreas = {}
@@ -19,6 +20,14 @@ def parseParking(xmlfile):
             edge = lane.split('_')[0]
             parkingAreas[edge] = parkingArea
     return parkingAreas
+
+def splitDropoffAndOnParking(total_parking_xml, drop_off_only_percentage):
+    root = etree.parse(total_parking_xml).getroot()
+    additional = objectify.Element("additional")
+    for parking in root.getchildren():
+        if np.random.random() < 1 - drop_off_only_percentage:
+            additional.append(parking)
+    return additional
 
 def parkingToTAZs(features_geometry, parkingAreas, net, xform_reverse):
     TAZ_parking_dict = {}
