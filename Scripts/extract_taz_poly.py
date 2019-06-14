@@ -5,12 +5,13 @@ print(sys.path)
 from qgis.core import * # python-qgis only works with python3.6.
 import numpy as np
 
-file = open("/home/huajun/Desktop/VENTOS_all/VENTOS/examples/router/sumocfg/sfpark/sf.poly.xml", "w")
+city = 'san_francisco'
+file = open('../cities/' + city + '/' + city + '.poly.xml', 'w')
 file.write('''<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo-sim.org/xsd/additional_file.xsd">\n''')
 file.write("\n")
 
-# offSet = QgsPointXY(-549867.32, -4179840.29)
-offSet = QgsPointXY(-440044.55, -4068040.52)
+offSet = QgsPointXY(-549867.32, -4179840.29)
+#offSet = QgsPointXY(-440044.55, -4068040.52)
 
 # supply path to qgis install location
 QgsApplication.setPrefixPath('/usr', True)
@@ -22,9 +23,8 @@ qgs = QgsApplication([], False)
 # load providers
 qgs.initQgis()
 
-# Write your code here to load some layers, use processing
-# algorithms, etc.
-layer = QgsVectorLayer("selected_fairfield.shp", "selected_taz", "ogr")
+# Write your code here to load some layers, use processing algorithms, etc.
+layer = QgsVectorLayer('../cities/' + city + '/shp/' + city + '.shp', "selected_taz", "ogr")
 if not layer.isValid():
     print("Layer failed to load!")
 

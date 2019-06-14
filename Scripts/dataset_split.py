@@ -5,7 +5,7 @@ import os, sys
 from qgis.core import *
 
 
-def split_XML(source_dataset, target_dataset, ext, xform_reverse, is_all):
+def split_XML(source_dataset, target_dataset, features_geometry, xform_reverse, is_all, extent):
 
     with open(target_dataset, 'w') as xml_writer, open(source_dataset, 'r') as xml_reader:
 
@@ -37,8 +37,7 @@ def split_XML(source_dataset, target_dataset, ext, xform_reverse, is_all):
 
                 fromPoint_tr = xform_reverse.transform(from_x, from_y)
                 toPoint_tr = xform_reverse.transform(to_x, to_y)
-
-                if ext.contains(fromPoint_tr) or ext.contains(toPoint_tr):
+                if contains(features_geometry, fromPoint_tr, toPoint_tr, extent):
                     print("{} th person.".format(person_count))
                     person_count = person_count + 1
                     obj_xml = etree.tostring(person,
@@ -47,20 +46,34 @@ def split_XML(source_dataset, target_dataset, ext, xform_reverse, is_all):
                                              encoding="utf-8").decode("utf-8")
                     xml_writer.write(obj_xml)
                     break
+
             person.clear()  # free memory for the person that is already processed`
+        total_str = '''<total_number count="{}"/>\n\n'''.format(person_count)
+        xml_writer.write(total_str)
         xml_writer.write('''</population>''')
         xml_writer.close()
         print("Total person count = {}".format(person_count))
     return
 
+def contains(features_geometry, from_pt, to_pt, extent):
+    if not extent.contains(from_pt) and not extent.contains(to_pt):
+        return False
+    for ext in features_geometry:
+        if ext.contains(from_pt) or ext.contains(to_pt):
+            return True
+        else:
+            continue
+    return False
+
 
 if __name__ == "__main__":
     # specify city information
-    city_shapefile = "../cities/san_francisco/shp/downtown_taz.shp"
+    city = 'san_francisco'
+    city_shapefile = '../cities/' + city + '/shp/' + city + '.shp'
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    dataset = '0.01'
+    dataset = 'all_7'
     source_dataset = '../Caroline_NCST_Data/Scenario_1/matsim_input/plans_' + dataset + '.xml'
-    target_dataset = '../cities/san_francisco/san_francisco_plans_' + dataset + '.xml'
+    target_dataset = '../cities/' + city + '/' + city + '_plans_' + dataset + '.xml'
 
     # supply path to qgis install location
     QgsApplication.setPrefixPath('/usr', True)
@@ -81,7 +94,7 @@ if __name__ == "__main__":
     xform = QgsCoordinateTransform(crsSrc, crsDest, QgsProject.instance())
     xform_reverse = QgsCoordinateTransform(crsDest, crsSrc, QgsProject.instance())
 
-    ext = layer.extent()
+    extent = layer.extent()
 
     features = layer.getFeatures()
     features_geometry = []
@@ -89,4 +102,4 @@ if __name__ == "__main__":
         # retrieve every feature with its geometry and attributes
         features_geometry.append(feature.geometry())
 
-    split_XML(source_dataset, target_dataset, ext, xform_reverse, flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False
+    split_XML(source_dataset, target_dataset, features_geometry, xform_reverse, flags_dict[dataset], extent) # For 'plans_all_7', set to True; otherwise, set to False

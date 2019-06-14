@@ -68,11 +68,96 @@ def parkingToTAZs(features_geometry, parkingAreas, net, xform_reverse):
         TAZ_parking_dict[str(candidate_index)].append(parkingAreas[parking[0]])
     return TAZ_parking_dict
 
+def closestTazWithParking(on_dict, off_dict, dropoff_dict, geo_features):
+    on_close = np.zeros(len(on_dict)).astype(int)
+    off_close = np.zeros(len(off_dict)).astype(int)
+    dropoff_close = np.zeros(len(dropoff_dict)).astype(int)
+    for key, pa in on_dict.items():
+        if pa != []:
+            on_close[int(key)] = key
+        else:
+            origin_pt = geo_features[int(key)].centroid()
+            dist = float("inf")
+            target = NULL
+            for i in range(len(on_dict)):
+                if on_dict[str(i)] == []:
+                    continue
+                dest_pt = geo_features[i].centroid()
+                dist_tmp = origin_pt.distance(dest_pt)
+                if dist_tmp < dist:
+                    dist = dist_tmp
+                    target = i
+            on_close[int(key)] = target
 
+    for key, pa in off_dict.items():
+        if pa != []:
+            off_close[int(key)] = key
+        else:
+            origin_pt = geo_features[int(key)].centroid()
+            dist = float("inf")
+            target = NULL
+            for i in range(len(off_dict)):
+                if off_dict[str(i)] == []:
+                    continue
+                dest_pt = geo_features[i].centroid()
+                dist_tmp = origin_pt.distance(dest_pt)
+                if dist_tmp < dist:
+                    dist = dist_tmp
+                    target = i
+            off_close[int(key)] = target
 
+    for key, pa in dropoff_dict.items():
+        if pa != []:
+            dropoff_close[int(key)] = key
+        else:
+            origin_pt = geo_features[int(key)].centroid()
+            dist = float("inf")
+            target = NULL
+            for i in range(len(off_dict)):
+                if dropoff_dict[str(i)] == []:
+                    continue
+                dest_pt = geo_features[i].centroid()
+                dist_tmp = origin_pt.distance(dest_pt)
+                if dist_tmp < dist:
+                    dist = dist_tmp
+                    target = i
+            dropoff_close[int(key)] = target
 
+    return on_close, off_close, dropoff_close
 
+def parkingStats(parkingXML):
+    with open(parkingXML) as fobj:
+        xml = fobj.read()
+        xml = bytes(bytearray(xml, encoding='utf-8'))
+        additional = etree.parse(parkingXML).getroot()
+
+        #print(additional.tag)
+        count = 0
+        total_capacity = 0
+        for parkingArea in additional.getchildren():
+            count += 1
+            total_capacity += int(parkingArea.attrib['roadsideCapacity'])
+        return count, total_capacity
+
+def getAllModes(tripXML):
+    modes = []
+    with open(tripXML) as fobj:
+        xml = fobj.read()
+        xml = bytes(bytearray(xml, encoding='utf-8'))
+        population = etree.parse(tripXML).getroot()
+        for person in population:
+            if len(person):
+                plan = person[0]
+                for child in plan.getchildren():
+                    if child.tag == 'leg':
+                        mode = child.attrib['mode']
+                        if mode not in modes:
+                            modes.append(mode)
+                            print(modes)
 
 
 if __name__ == "__main__":
-    parseParking('/home/huajun/Desktop/NCST_parking/cities/fairfield/on-parking.add.xml')
+    # parseParking('/home/huajun/Desktop/NCST_parking/cities/fairfield/on-parking.add.xml')
+    count, total_capacity = parkingStats('/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_1/on_parking.add.xml')
+    print(count, total_capacity)
+    getAllModes('/home/huajun/Desktop/NCST_parking/cities/san_francisco/san_francisco_plans_all_7.xml')

@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on Thu 21 Feb 2019 04:20:44 PM PST by Eclipse SUMO netedit Version v1_0_1+0000-b43a3e4816
+<!-- generated on Thu 13 Jun 2019 02:32:49 PM PDT by Eclipse SUMO netedit Version v1_1_0+0000-2147d155b1
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
 
     <input>
-        <sumo-net-file value="hello_trimmed.net.xml"/>
+        <sumo-net-file value="san_francisco.net.xml"/>
     </input>
 
     <output>
-        <output-file value="hello_trimmed.net.xml"/>
+        <output-file value="san_francisco.net.xml"/>
     </output>
 
     <processing>
+        <geometry.max-grade.fix value="false"/>
         <offset.disable-normalization value="true"/>
         <lefthand value="false"/>
     </processing>
@@ -32,11 +33,152 @@
 -->
 
 <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
-
-    <parkingArea id="parkingArea_8919205#0_0_30" lane="8919205#0_0" roadsideCapacity="0" startPos="129.81" endPos="179.81">
-    	<space x="2225" y="3477"/>
-	    <space x="2230" y="3477"/>
-	    <space x="2235" y="3477"/>
-    </parkingArea>
-    
+    <parkingArea id="parkingArea_-111550911#2_0_98" lane="-111550911#2_0" roadsideCapacity="371" startPos="50.10" endPos="55.10"/>
+    <parkingArea id="parkingArea_-141688972#1_0_145" lane="-141688972#1_0" roadsideCapacity="220" startPos="125.11" endPos="130.11"/>
+    <parkingArea id="parkingArea_-141688972#2_0_130" lane="-141688972#2_0" roadsideCapacity="146" startPos="140.86" endPos="145.86"/>
+    <parkingArea id="parkingArea_-143617587_0_133" lane="-143617587_0" roadsideCapacity="140" startPos="134.84" endPos="139.84"/>
+    <parkingArea id="parkingArea_-143666209#2_0_12" lane="-143666209#2_0" roadsideCapacity="48" startPos="23.11" endPos="28.11"/>
+    <parkingArea id="parkingArea_-148847001#5_0_26" lane="-148847001#5_0" roadsideCapacity="200" startPos="45.87" endPos="50.87"/>
+    <parkingArea id="parkingArea_-148847001#8_0_30" lane="-148847001#8_0" roadsideCapacity="65" startPos="40.76" endPos="45.76"/>
+    <parkingArea id="parkingArea_-174822357#1_0_95" lane="-174822357#1_0" roadsideCapacity="50" startPos="47.08" endPos="52.08"/>
+    <parkingArea id="parkingArea_-224384018_0_73" lane="-224384018_0" roadsideCapacity="405" startPos="126.73" endPos="131.73"/>
+    <parkingArea id="parkingArea_-225432462#1_0_61" lane="-225432462#1_0" roadsideCapacity="40" startPos="54.89" endPos="59.89"/>
+    <parkingArea id="parkingArea_-225518512#1_0_109" lane="-225518512#1_0" roadsideCapacity="120" startPos="78.76" endPos="83.76"/>
+    <parkingArea id="parkingArea_-228186482#1_0_69" lane="-228186482#1_0" roadsideCapacity="246" startPos="46.71" endPos="51.71"/>
+    <parkingArea id="parkingArea_-228201785#0_0_110" lane="-228201785#0_0" roadsideCapacity="300" startPos="27.34" endPos="32.34"/>
+    <parkingArea id="parkingArea_-23924510#0_0_37" lane="-23924510#0_0" roadsideCapacity="60" startPos="61.41" endPos="66.41"/>
+    <parkingArea id="parkingArea_-254299113#0_0_11" lane="-254299113#0_0" roadsideCapacity="39" startPos="79.42" endPos="84.42"/>
+    <parkingArea id="parkingArea_-254308553_0_144" lane="-254308553_0" roadsideCapacity="150" startPos="90.43" endPos="95.43"/>
+    <parkingArea id="parkingArea_-255168048#2_0_9" lane="-255168048#2_0" roadsideCapacity="193" startPos="70.12" endPos="75.12"/>
+    <parkingArea id="parkingArea_-255168048#3_0_16" lane="-255168048#3_0" roadsideCapacity="101" startPos="72.02" endPos="77.02"/>
+    <parkingArea id="parkingArea_-255168048#4_0_18" lane="-255168048#4_0" roadsideCapacity="73" startPos="61.29" endPos="66.29"/>
+    <parkingArea id="parkingArea_-255330036#11_0_91" lane="-255330036#11_0" roadsideCapacity="5" startPos="28.00" endPos="33.00"/>
+    <parkingArea id="parkingArea_-255330036#12_0_93" lane="-255330036#12_0" roadsideCapacity="240" startPos="90.55" endPos="95.55"/>
+    <parkingArea id="parkingArea_-255330036#3_0_119" lane="-255330036#3_0" roadsideCapacity="238" startPos="9.37" endPos="14.37"/>
+    <parkingArea id="parkingArea_-264874017#4_0_140" lane="-264874017#4_0" roadsideCapacity="79" startPos="21.19" endPos="26.19"/>
+    <parkingArea id="parkingArea_-27570786#2_0_23" lane="-27570786#2_0" roadsideCapacity="120" startPos="55.33" endPos="60.33"/>
+    <parkingArea id="parkingArea_-27571801_0_50" lane="-27571801_0" roadsideCapacity="450" startPos="54.67" endPos="59.67"/>
+    <parkingArea id="parkingArea_-283537552#1_0_87" lane="-283537552#1_0" roadsideCapacity="25" startPos="58.85" endPos="63.85"/>
+    <parkingArea id="parkingArea_-283537644#1_0_86" lane="-283537644#1_0" roadsideCapacity="28" startPos="29.59" endPos="34.59"/>
+    <parkingArea id="parkingArea_-30029721#1_0_35" lane="-30029721#1_0" roadsideCapacity="13" startPos="21.86" endPos="26.86"/>
+    <parkingArea id="parkingArea_-30831816#3_0_24" lane="-30831816#3_0" roadsideCapacity="980" startPos="61.97" endPos="66.97"/>
+    <parkingArea id="parkingArea_-34128712_0_14" lane="-34128712_0" roadsideCapacity="23" startPos="72.49" endPos="77.49"/>
+    <parkingArea id="parkingArea_-7373736#0_0_147" lane="-7373736#0_0" roadsideCapacity="48" startPos="135.37" endPos="140.37"/>
+    <parkingArea id="parkingArea_-7373736#1_0_131" lane="-7373736#1_0" roadsideCapacity="120" startPos="150.66" endPos="155.66"/>
+    <parkingArea id="parkingArea_-87297168_0_22" lane="-87297168_0" roadsideCapacity="16" startPos="63.58" endPos="68.58"/>
+    <parkingArea id="parkingArea_-88559691#3_0_75" lane="-88559691#3_0" roadsideCapacity="170" startPos="84.44" endPos="89.44"/>
+    <parkingArea id="parkingArea_-88559691#6_0_82" lane="-88559691#6_0" roadsideCapacity="21" startPos="86.42" endPos="91.42"/>
+    <parkingArea id="parkingArea_-88572877#6_0_76" lane="-88572877#6_0" roadsideCapacity="100" startPos="133.54" endPos="138.54"/>
+    <parkingArea id="parkingArea_-88572932#2_0_136" lane="-88572932#2_0" roadsideCapacity="143" startPos="130.45" endPos="135.45"/>
+    <parkingArea id="parkingArea_-88572970_0_67" lane="-88572970_0" roadsideCapacity="110" startPos="54.60" endPos="59.60"/>
+    <parkingArea id="parkingArea_-8916765#1_0_33" lane="-8916765#1_0" roadsideCapacity="400" startPos="39.79" endPos="44.79"/>
+    <parkingArea id="parkingArea_-8916922#4_0_52" lane="-8916922#4_0" roadsideCapacity="605" startPos="59.05" endPos="64.05"/>
+    <parkingArea id="parkingArea_-8920242#0_0_115" lane="-8920242#0_0" roadsideCapacity="150" startPos="23.20" endPos="28.20"/>
+    <parkingArea id="parkingArea_-8922307_0_63" lane="-8922307_0" roadsideCapacity="24" startPos="93.27" endPos="98.27"/>
+    <parkingArea id="parkingArea_-p2#3_0_126" lane="-p2#3_0" roadsideCapacity="2585" startPos="24.98" endPos="29.98"/>
+    <parkingArea id="parkingArea_-p4#0_0_102" lane="-p4#0_0" roadsideCapacity="752" startPos="19.06" endPos="24.06"/>
+    <parkingArea id="parkingArea_111049100#0_0_64" lane="111049100#0_0" roadsideCapacity="25" startPos="58.55" endPos="63.55"/>
+    <parkingArea id="parkingArea_111319423_0_83" lane="111319423_0" roadsideCapacity="120" startPos="137.22" endPos="142.22"/>
+    <parkingArea id="parkingArea_111550911#2_0_97" lane="111550911#2_0" roadsideCapacity="315" startPos="17.22" endPos="22.22"/>
+    <parkingArea id="parkingArea_111552058#0_0_101" lane="111552058#0_0" roadsideCapacity="798" startPos="75.93" endPos="80.93"/>
+    <parkingArea id="parkingArea_111560679#0_0_111" lane="111560679#0_0" roadsideCapacity="685" startPos="134.75" endPos="139.75"/>
+    <parkingArea id="parkingArea_120256350#0_0_51" lane="120256350#0_0" roadsideCapacity="182" startPos="93.55" endPos="98.55"/>
+    <parkingArea id="parkingArea_120256350#3_0_52" lane="120256350#3_0" roadsideCapacity="308" startPos="96.99" endPos="101.99"/>
+    <parkingArea id="parkingArea_120256350#8_0_45" lane="120256350#8_0" roadsideCapacity="417" startPos="93.60" endPos="98.60"/>
+    <parkingArea id="parkingArea_120256351_0_49" lane="120256351_0" roadsideCapacity="98" startPos="98.65" endPos="103.65"/>
+    <parkingArea id="parkingArea_123741454#2_0_109" lane="123741454#2_0" roadsideCapacity="20" startPos="776.51" endPos="781.51"/>
+    <parkingArea id="parkingArea_133735130#0_0_120" lane="133735130#0_0" roadsideCapacity="25" startPos="100.97" endPos="105.97"/>
+    <parkingArea id="parkingArea_133735130#4_0_118" lane="133735130#4_0" roadsideCapacity="40" startPos="25.22" endPos="30.22"/>
+    <parkingArea id="parkingArea_141688972#1_0_146" lane="141688972#1_0" roadsideCapacity="36" startPos="131.71" endPos="136.71"/>
+    <parkingArea id="parkingArea_143617589#2_0_121" lane="143617589#2_0" roadsideCapacity="152" startPos="27.21" endPos="32.21"/>
+    <parkingArea id="parkingArea_143617593_0_143" lane="143617593_0" roadsideCapacity="140" startPos="90.35" endPos="95.35"/>
+    <parkingArea id="parkingArea_143666206_0_5" lane="143666206_0" roadsideCapacity="199" startPos="61.57" endPos="66.57"/>
+    <parkingArea id="parkingArea_143666208#0_0_6" lane="143666208#0_0" roadsideCapacity="109" startPos="47.17" endPos="52.17"/>
+    <parkingArea id="parkingArea_160325575#0_0_47" lane="160325575#0_0" roadsideCapacity="160" startPos="86.99" endPos="91.99"/>
+    <parkingArea id="parkingArea_186400365_0_129" lane="186400365_0" roadsideCapacity="36" startPos="146.79" endPos="151.79"/>
+    <parkingArea id="parkingArea_196831123#2_0_29" lane="196831123#2_0" roadsideCapacity="237" startPos="69.44" endPos="74.44"/>
+    <parkingArea id="parkingArea_202317711_0_70" lane="202317711_0" roadsideCapacity="50" startPos="44.46" endPos="49.46"/>
+    <parkingArea id="parkingArea_214545530#0_0_139" lane="214545530#0_0" roadsideCapacity="310" startPos="100.07" endPos="105.07"/>
+    <parkingArea id="parkingArea_214545530#4_0_141" lane="214545530#4_0" roadsideCapacity="50" startPos="36.93" endPos="41.93"/>
+    <parkingArea id="parkingArea_224373751_0_54" lane="224373751_0" roadsideCapacity="285" startPos="92.15" endPos="97.15"/>
+    <parkingArea id="parkingArea_224373753_0_53" lane="224373753_0" roadsideCapacity="160" startPos="48.54" endPos="53.54"/>
+    <parkingArea id="parkingArea_225432462#0_0_60" lane="225432462#0_0" roadsideCapacity="118" startPos="49.26" endPos="54.26"/>
+    <parkingArea id="parkingArea_225518502#0_0_84" lane="225518502#0_0" roadsideCapacity="358" startPos="61.25" endPos="66.25"/>
+    <parkingArea id="parkingArea_225518502#3_0_85" lane="225518502#3_0" roadsideCapacity="15" startPos="66.26" endPos="71.26"/>
+    <parkingArea id="parkingArea_225518512#0_0_107" lane="225518512#0_0" roadsideCapacity="150" startPos="88.79" endPos="93.79"/>
+    <parkingArea id="parkingArea_225806056_0_125" lane="225806056_0" roadsideCapacity="82" startPos="103.24" endPos="108.24"/>
+    <parkingArea id="parkingArea_228186482#0_0_71" lane="228186482#0_0" roadsideCapacity="340" startPos="52.05" endPos="57.05"/>
+    <parkingArea id="parkingArea_254299112#1_0_28" lane="254299112#1_0" roadsideCapacity="150" startPos="33.31" endPos="38.31"/>
+    <parkingArea id="parkingArea_254299112#2_0_27" lane="254299112#2_0" roadsideCapacity="284" startPos="66.56" endPos="71.56"/>
+    <parkingArea id="parkingArea_254299113#0_0_10" lane="254299113#0_0" roadsideCapacity="353" startPos="63.13" endPos="68.13"/>
+    <parkingArea id="parkingArea_254299125_0_8" lane="254299125_0" roadsideCapacity="353" startPos="66.07" endPos="71.07"/>
+    <parkingArea id="parkingArea_254299142#2_0_116" lane="254299142#2_0" roadsideCapacity="60" startPos="35.25" endPos="40.25"/>
+    <parkingArea id="parkingArea_254299142#3_0_103" lane="254299142#3_0" roadsideCapacity="363" startPos="85.97" endPos="90.97"/>
+    <parkingArea id="parkingArea_254308548#0_0_142" lane="254308548#0_0" roadsideCapacity="82" startPos="114.32" endPos="119.32"/>
+    <parkingArea id="parkingArea_254982299_0_25" lane="254982299_0" roadsideCapacity="100" startPos="75.86" endPos="80.86"/>
+    <parkingArea id="parkingArea_255168047#0_0_112" lane="255168047#0_0" roadsideCapacity="129" startPos="54.00" endPos="59.00"/>
+    <parkingArea id="parkingArea_255168048#0_0_7" lane="255168048#0_0" roadsideCapacity="66" startPos="73.23" endPos="78.23"/>
+    <parkingArea id="parkingArea_255168048#3_0_15" lane="255168048#3_0" roadsideCapacity="96" startPos="70.86" endPos="75.86"/>
+    <parkingArea id="parkingArea_255168048#4_0_17" lane="255168048#4_0" roadsideCapacity="115" startPos="51.33" endPos="56.33"/>
+    <parkingArea id="parkingArea_255330036#10_0_92" lane="255330036#10_0" roadsideCapacity="40" startPos="35.25" endPos="40.25"/>
+    <parkingArea id="parkingArea_255330036#13_0_94" lane="255330036#13_0" roadsideCapacity="293" startPos="116.49" endPos="121.49"/>
+    <parkingArea id="parkingArea_255330036#3_0_122" lane="255330036#3_0" roadsideCapacity="200" startPos="60.37" endPos="65.37"/>
+    <parkingArea id="parkingArea_255330036#7_0_96" lane="255330036#7_0" roadsideCapacity="133" startPos="104.14" endPos="109.14"/>
+    <parkingArea id="parkingArea_255330069#0_0_132" lane="255330069#0_0" roadsideCapacity="97" startPos="43.83" endPos="48.83"/>
+    <parkingArea id="parkingArea_255330069#1_0_134" lane="255330069#1_0" roadsideCapacity="10" startPos="45.45" endPos="50.45"/>
+    <parkingArea id="parkingArea_25657409#19_0_127" lane="25657409#19_0" roadsideCapacity="160" startPos="147.84" endPos="152.84"/>
+    <parkingArea id="parkingArea_25758528#0_0_114" lane="25758528#0_0" roadsideCapacity="124" startPos="60.11" endPos="65.11"/>
+    <parkingArea id="parkingArea_25758528#1_0_113" lane="25758528#1_0" roadsideCapacity="180" startPos="69.58" endPos="74.58"/>
+    <parkingArea id="parkingArea_26943623_0_99" lane="26943623_0" roadsideCapacity="13" startPos="38.46" endPos="43.46"/>
+    <parkingArea id="parkingArea_27145438#0_0_123" lane="27145438#0_0" roadsideCapacity="1000" startPos="122.01" endPos="127.01"/>
+    <parkingArea id="parkingArea_27397692_0_57" lane="27397692_0" roadsideCapacity="103" startPos="100.16" endPos="105.16"/>
+    <parkingArea id="parkingArea_27397919_0_66" lane="27397919_0" roadsideCapacity="160" startPos="57.05" endPos="62.05"/>
+    <parkingArea id="parkingArea_27397927_0_42" lane="27397927_0" roadsideCapacity="315" startPos="51.94" endPos="56.94"/>
+    <parkingArea id="parkingArea_27397934#0_0_48" lane="27397934#0_0" roadsideCapacity="285" startPos="99.61" endPos="104.61"/>
+    <parkingArea id="parkingArea_27400588#0_0_3" lane="27400588#0_0" roadsideCapacity="220" startPos="79.22" endPos="84.22"/>
+    <parkingArea id="parkingArea_27570802#1_0_20" lane="27570802#1_0" roadsideCapacity="15" startPos="92.68" endPos="97.68"/>
+    <parkingArea id="parkingArea_283534317#5_0_128" lane="283534317#5_0" roadsideCapacity="4" startPos="38.73" endPos="43.73"/>
+    <parkingArea id="parkingArea_30029708#1_0_36" lane="30029708#1_0" roadsideCapacity="40" startPos="53.30" endPos="58.30"/>
+    <parkingArea id="parkingArea_30029867#2_0_34" lane="30029867#2_0" roadsideCapacity="16" startPos="56.70" endPos="61.70"/>
+    <parkingArea id="parkingArea_31129732#0_0_117" lane="31129732#0_0" roadsideCapacity="180" startPos="168.79" endPos="173.79"/>
+    <parkingArea id="parkingArea_34128471#0_0_5" lane="34128471#0_0" roadsideCapacity="314" startPos="61.38" endPos="66.38"/>
+    <parkingArea id="parkingArea_35675861#0_0_89" lane="35675861#0_0" roadsideCapacity="25" startPos="26.21" endPos="31.21"/>
+    <parkingArea id="parkingArea_37126390#2_0_38" lane="37126390#2_0" roadsideCapacity="530" startPos="49.03" endPos="54.03"/>
+    <parkingArea id="parkingArea_37177689#6_0_148" lane="37177689#6_0" roadsideCapacity="210" startPos="120.81" endPos="125.81"/>
+    <parkingArea id="parkingArea_37177789#0_0_124" lane="37177789#0_0" roadsideCapacity="268" startPos="131.35" endPos="136.35"/>
+    <parkingArea id="parkingArea_47172745_0_65" lane="47172745_0" roadsideCapacity="200" startPos="54.06" endPos="59.06"/>
+    <parkingArea id="parkingArea_87297168_0_19" lane="87297168_0" roadsideCapacity="21" startPos="64.36" endPos="69.36"/>
+    <parkingArea id="parkingArea_88142686#2_0_31" lane="88142686#2_0" roadsideCapacity="120" startPos="49.52" endPos="54.52"/>
+    <parkingArea id="parkingArea_88142687#1_0_40" lane="88142687#1_0" roadsideCapacity="150" startPos="354.78" endPos="359.78"/>
+    <parkingArea id="parkingArea_88142690#2_0_39" lane="88142690#2_0" roadsideCapacity="300" startPos="31.98" endPos="36.98"/>
+    <parkingArea id="parkingArea_88396403_0_21" lane="88396403_0" roadsideCapacity="29" startPos="11.33" endPos="16.33"/>
+    <parkingArea id="parkingArea_88463829#0_0_44" lane="88463829#0_0" roadsideCapacity="366" startPos="83.29" endPos="88.29"/>
+    <parkingArea id="parkingArea_88466055#0_0_43" lane="88466055#0_0" roadsideCapacity="400" startPos="47.22" endPos="52.22"/>
+    <parkingArea id="parkingArea_88559650_0_90" lane="88559650_0" roadsideCapacity="15" startPos="29.51" endPos="34.51"/>
+    <parkingArea id="parkingArea_88559691#4_0_101" lane="88559691#4_0" roadsideCapacity="525" startPos="106.51" endPos="111.51"/>
+    <parkingArea id="parkingArea_88559702#1_0_106" lane="88559702#1_0" roadsideCapacity="360" startPos="5.48" endPos="10.48"/>
+    <parkingArea id="parkingArea_88559702#2_0_105" lane="88559702#2_0" roadsideCapacity="84" startPos="55.56" endPos="60.56"/>
+    <parkingArea id="parkingArea_88572877#0_0_74" lane="88572877#0_0" roadsideCapacity="270" startPos="138.71" endPos="143.71"/>
+    <parkingArea id="parkingArea_88572895#0_0_138" lane="88572895#0_0" roadsideCapacity="59" startPos="97.73" endPos="102.73"/>
+    <parkingArea id="parkingArea_88572905_0_78" lane="88572905_0" roadsideCapacity="110" startPos="83.73" endPos="88.73"/>
+    <parkingArea id="parkingArea_88572932#2_0_135" lane="88572932#2_0" roadsideCapacity="155" startPos="47.30" endPos="52.30"/>
+    <parkingArea id="parkingArea_88572965#0_0_102" lane="88572965#0_0" roadsideCapacity="240" startPos="79.77" endPos="84.77"/>
+    <parkingArea id="parkingArea_88572970_0_68" lane="88572970_0" roadsideCapacity="230" startPos="53.10" endPos="58.10"/>
+    <parkingArea id="parkingArea_88597563#0_0_59" lane="88597563#0_0" roadsideCapacity="210" startPos="95.88" endPos="100.88"/>
+    <parkingArea id="parkingArea_88597577#0_0_72" lane="88597577#0_0" roadsideCapacity="192" startPos="95.77" endPos="100.77"/>
+    <parkingArea id="parkingArea_8916765#1_0_32" lane="8916765#1_0" roadsideCapacity="526" startPos="32.05" endPos="37.05"/>
+    <parkingArea id="parkingArea_8918460#0_0_56" lane="8918460#0_0" roadsideCapacity="440" startPos="89.18" endPos="94.18"/>
+    <parkingArea id="parkingArea_8919328#1_0_104" lane="8919328#1_0" roadsideCapacity="26" startPos="105.83" endPos="110.83"/>
+    <parkingArea id="parkingArea_8920394#1_0_100" lane="8920394#1_0" roadsideCapacity="30" startPos="151.33" endPos="156.33"/>
+    <parkingArea id="parkingArea_8921255#1_0_13" lane="8921255#1_0" roadsideCapacity="575" startPos="18.90" endPos="23.90"/>
+    <parkingArea id="parkingArea_8922307_0_62" lane="8922307_0" roadsideCapacity="12" startPos="97.63" endPos="102.63"/>
+    <parkingArea id="parkingArea_90077241_0_41" lane="90077241_0" roadsideCapacity="235" startPos="2852.60" endPos="2857.60"/>
+    <parkingArea id="parkingArea_91181770#0_0_81" lane="91181770#0_0" roadsideCapacity="150" startPos="57.74" endPos="62.74"/>
+    <parkingArea id="parkingArea_91181771#0_0_77" lane="91181771#0_0" roadsideCapacity="262" startPos="126.37" endPos="131.37"/>
+    <parkingArea id="parkingArea_91181771#16_0_137" lane="91181771#16_0" roadsideCapacity="96" startPos="124.91" endPos="129.91"/>
+    <parkingArea id="parkingArea_91185861#0_0_2" lane="91185861#0_0" roadsideCapacity="250" startPos="63.47" endPos="68.47"/>
+    <parkingArea id="parkingArea_91185861#1_0_12" lane="91185861#1_0" roadsideCapacity="210" startPos="71.59" endPos="76.59"/>
+    <parkingArea id="parkingArea_99231460_0_88" lane="99231460_0" roadsideCapacity="25" startPos="58.86" endPos="63.86"/>
+    <parkingArea id="parkingArea_99231475_0_55" lane="99231475_0" roadsideCapacity="230" startPos="47.54" endPos="52.54"/>
+    <parkingArea id="parkingArea_99231482_0_58" lane="99231482_0" roadsideCapacity="200" startPos="59.03" endPos="64.03"/>
 </additional>
