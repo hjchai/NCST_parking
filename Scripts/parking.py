@@ -140,7 +140,8 @@ def parkingStats(parkingXML):
         return count, total_capacity
 
 def getAllModes(tripXML):
-    modes = []
+    modes = {}
+    count = 0
     with open(tripXML) as fobj:
         xml = fobj.read()
         xml = bytes(bytearray(xml, encoding='utf-8'))
@@ -152,8 +153,14 @@ def getAllModes(tripXML):
                     if child.tag == 'leg':
                         mode = child.attrib['mode']
                         if mode not in modes:
-                            modes.append(mode)
+                            modes[mode] = 1
                             print(modes)
+                        else:
+                            modes[mode] += 1
+                            count += 1
+                            # print(count)
+    print(modes)
+
 
 
 if __name__ == "__main__":

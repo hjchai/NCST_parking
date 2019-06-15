@@ -236,18 +236,6 @@ def createTrip(data, net, BBox, offset, ODs, parkingAreas, type, duration, featu
     trip.set("type", "passenger")
     trip.set("color", "1,1,0")
 
-    to_tr = xform_reverse.transform(float(data["to_x"]), float(data["to_y"]))
-    to_pt_tr = QgsGeometry.fromPointXY(to_tr)
-    # index = 0
-    # for feature_geometry in features_geometry:
-    #     if feature_geometry.contains(to_pt_tr):
-    #         break
-    #     index += 1
-
-    # point_from = Point(float(data["from_x"])+offset[0], float(data["from_y"])+offset[1])
-    # point_to = Point(float(data["to_x"])+offset[0], float(data["to_y"])+offset[1])
-    # polygon = Polygon([(BBox[0][0], BBox[0][1]), (BBox[1][0], BBox[0][1]), (BBox[1][0], BBox[1][1]), (BBox[0][0], BBox[1][1])])
-
     stat = ''
 
     # if polygon.contains(point_from) or polygon.contains(point_to):
@@ -378,6 +366,168 @@ def getOD(ODFile):
         destination_weights.append(float(weight))
     return {"origins": origins, "origin_weights": origin_weights, "destinations": destinations, "destination_weights": destination_weights}
 
+def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
+         drop_off_percentage):#, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off):
+    rnd = np.random.random()
+    duration = int(trip["to_end_time"]) - int(trip["from_end_time"])  # trip duration
+    # on-street drop-off
+    if rnd <= drop_off_percentage:
+        parkingAreas = parkingAreas_drop_off
+        TAZ_parking_dict = TAZ_drop_off_parking_dict
+        type = 'drop-off'
+        duration = 20
+        closest = drop_off_closest
+    else:
+        # off-street parking
+        if duration >= 7200:
+            parkingAreas = parkingAreas_off
+            TAZ_parking_dict = TAZ_off_parking_dict
+            type = 'off'
+            closest = off_closest
+        # on-street parking
+        else:
+            parkingAreas = parkingAreas_on
+            TAZ_parking_dict = TAZ_on_parking_dict
+            type = 'on'
+            closest = on_closest
+    """
+            Create a trip XML element
+        """
+    flag = True  # set the flag to determin if closestedge is found or not
+    radius = 200
+    trip_element = objectify.Element("trip")
+    # trip_element = {}
+    trip_element.set("id", trip["trip_id"] + '_' + type)
+    # trip_element["trip_id"] = trip["trip_id"]
+    trip_element.set("type", "passenger")
+    # trip_element["type"] = "passenger"
+    trip_element.set("color", "1,1,0")
+    # trip_element["color"] = "1,1,0"
+
+    stat = ''
+
+    # if polygon.contains(point_from) or polygon.contains(point_to):
+    if trip["from_taz"] != '' or trip["to_taz"] != '':
+        # print("This trip has at least one end in the ROI.")
+        flag = True
+
+        #### trip going out polygon:
+        # if it is a drop off trip, then parking at to_edge_id for 20s, after that travel back to from node
+        # if it is a on or off parking, do not assign parking as it is going to park somewhere outside the network
+        ####
+        # if polygon.contains(point_from) and not polygon.contains(point_to): # trip going out polygon
+        if trip["from_taz"] != '' and trip["to_taz"] == '':
+            from_edge = getClosestEdge(float(trip["from_x"]) + offset[0], float(trip["from_y"]) + offset[1], net,
+                                       radius)
+            if from_edge is not None:
+                from_edge_id = from_edge.getID()
+            to_edge_id = ODs["destinations"][weighted_choice(ODs["destination_weights"])]
+            if from_edge is None or from_edge_id in ODs["destinations"]:
+                flag = False
+                trip_element.set("from", "")
+                # trip_element["from"] = ""
+
+            else:
+                # trip_element.set("from", from_edge_id)
+                trip_element["from"] = from_edge_id
+                if type is 'drop-off' and trip["to_type"] != 'home':
+                    etree.SubElement(trip_element, "stop")
+                    parkedEdge = getParkedEdge(to_edge_id, parkingAreas, None)
+                    trip_element.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
+                    trip_element.stop.set("duration", str(duration))
+                    # trip_element["stop"] = {"parkingArea": parkingAreas[parkedEdge].attrib["id"],
+                    #                         "duration"}
+                stat = 'out'
+            # need to make sure there is a path going back to from node
+            if type is 'drop-off' and trip["to_type"] != 'home':
+                trip_element.set("to", from_edge_id)
+            else:
+                trip_element.set("to", to_edge_id)
+            trip_element.set("direction", "out")
+
+        #### trip going into polygon:
+        #
+        ####
+        # elif polygon.contains(point_to) and not polygon.contains(point_from):
+        elif trip["to_taz"] != '' and trip["from_taz"] == '':
+            from_edge_id = ODs["origins"][weighted_choice(ODs["origin_weights"])]
+            trip_element.set("from", from_edge_id)
+            to_edge = getClosestEdge(float(trip["to_x"]) + offset[0], float(trip["to_y"]) + offset[1], net, radius)
+            if to_edge is not None:
+                to_edge_id = to_edge.getID()
+            if to_edge is None or to_edge_id in ODs["origins"]:
+                flag = False
+                trip_element.set("to", "")
+            else:
+                if type is 'drop-off' and trip["to_type"] != 'home':
+                    trip_element.set("to", from_edge_id)
+                else:
+                    trip_element.set("to", to_edge_id)
+                if trip["to_type"] != 'home':
+                    etree.SubElement(trip_element, "stop")
+                    if TAZ_parking_dict[trip["to_taz"]] == []:
+                        # print('Trip type: ' + type + '. No corresponding parking is found within this TAZ. Select a nearest TAZ with parking.'.format(type))
+                        TAZ_parking = TAZ_parking_dict[str(closest[int(trip["to_taz"])])]
+                    else:
+                        TAZ_parking = TAZ_parking_dict[trip["to_taz"]]
+                    parkedEdge = getParkedEdge(to_edge_id, parkingAreas, TAZ_parking)
+                    trip_element.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
+                    trip_element.stop.set("duration", str(duration))
+                trip_element.set("direction", "into")
+                stat = 'into'
+
+        #### trip inside polygon
+        #
+        ####
+        else:
+            from_edge = getClosestEdge(float(trip["from_x"]) + offset[0], float(trip["from_y"]) + offset[1], net,
+                                       radius)
+            if from_edge is not None:
+                from_edge_id = from_edge.getID()
+            if from_edge is None or from_edge_id in ODs["destinations"]:
+                flag = False
+                trip_element.set("from", "")
+            else:
+                trip_element.set("from", from_edge_id)
+
+            to_edge = getClosestEdge(float(trip["to_x"]) + offset[0], float(trip["to_y"]) + offset[1], net, radius)
+            if to_edge is not None:
+                to_edge_id = to_edge.getID()
+            if to_edge is None or to_edge_id in ODs["origins"]:
+                flag = False
+                trip_element.set("to", "")
+            else:
+                if type is 'drop-off' and trip["to_type"] != 'home':
+                    trip_element.set("to", from_edge_id)
+                else:
+                    trip_element.set("to", to_edge_id)
+                if trip["to_type"] != 'home':
+                    etree.SubElement(trip_element, "stop")
+                    if TAZ_parking_dict[trip["to_taz"]] == []:
+                        # print('Trip type: ' + type + '. No corresponding parking is found within this TAZ. Select a nearest TAZ with parking.')
+                        TAZ_parking = TAZ_parking_dict[str(closest[int(trip["to_taz"])])]
+                    else:
+                        TAZ_parking = TAZ_parking_dict[trip["to_taz"]]
+                    parkedEdge = getParkedEdge(to_edge_id, parkingAreas, TAZ_parking)
+                    trip_element.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
+                    trip_element.stop.set("duration", str(duration))
+                trip_element.set("direction", "within")
+                stat = 'within'
+    else:
+        flag = False
+    # Set departure time (in second) for this trip
+    trip_element.set("depart", str(trip["from_end_time"]))
+    print('{} is done'.format(trip["trip_id"]))
+
+    return trip_element#, flag, stat
+
+def func_wrap(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs):
+    try:
+        return func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs)
+    except:
+        # print('%s: %s' % (trip["trip_id"], traceback.format_exc()))
+        raise
+
 def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, dataset, drop_off_percentage, scenario_dir):
     """
        Create an XML file
@@ -405,46 +555,61 @@ def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parking
     out = 0
     into = 0
     within = 0
-    for trip in trips_sorted:
-        rnd = np.random.random()
-        duration = int(trip["to_end_time"]) - int(trip["from_end_time"]) # trip duration
-        # on-street drop-off
-        if rnd <= drop_off_percentage:
-            parkingAreas = parkingAreas_drop_off
-            TAZ_parking_dict = TAZ_drop_off_parking_dict
-            type = 'drop-off'
-            duration = 20
-            closest = drop_off_closest
-        else:
-            # off-street parking
-            if duration >= on_off_parking_threshold:
-                parkingAreas = parkingAreas_off
-                TAZ_parking_dict = TAZ_off_parking_dict
-                type = 'off'
-                closest = off_closest
-            # on-street parking
-            else:
-                parkingAreas = parkingAreas_on
-                TAZ_parking_dict = TAZ_on_parking_dict
-                type = 'on'
-                closest = on_closest
-        trip, flag, stat = createTrip(trip, net, BBox, offset, ODs, parkingAreas, type, duration, features_geometry, xform_reverse, TAZ_parking_dict, closest)
 
-        if flag:
+    from functools import partial
+    from multiprocessing import Pool, get_context
+    sys.setrecursionlimit(10000)
+    p = get_context('spawn').Pool(processes=2)
+    trips = p.map(partial(func, on_closest=on_closest, off_closest=off_closest,
+                          drop_off_closest=drop_off_closest, net=net,
+                          offset=offset, ODs=ODs, drop_off_percentage=drop_off_percentage), trips_sorted)
+    p.close()
+    p.join()
+    print('Done!!!!')
+    # for trip in trips_sorted:
+    #     rnd = np.random.random()
+    #     duration = int(trip["to_end_time"]) - int(trip["from_end_time"]) # trip duration
+    #     # on-street drop-off
+    #     if rnd <= drop_off_percentage:
+    #         parkingAreas = parkingAreas_drop_off
+    #         TAZ_parking_dict = TAZ_drop_off_parking_dict
+    #         type = 'drop-off'
+    #         duration = 20
+    #         closest = drop_off_closest
+    #     else:
+    #         # off-street parking
+    #         if duration >= on_off_parking_threshold:
+    #             parkingAreas = parkingAreas_off
+    #             TAZ_parking_dict = TAZ_off_parking_dict
+    #             type = 'off'
+    #             closest = off_closest
+    #         # on-street parking
+    #         else:
+    #             parkingAreas = parkingAreas_on
+    #             TAZ_parking_dict = TAZ_on_parking_dict
+    #             type = 'on'
+    #             closest = on_closest
+    #     trip, flag, stat = createTrip(trip, net, BBox, offset, ODs, parkingAreas, type, duration, features_geometry, xform_reverse, TAZ_parking_dict, closest)
+    #
+    #     if flag:
+    #         root.append(trip)
+    #     else:
+    #         continue
+    #     if count % 1000 == 0:
+    #         print("Trip: " + str(count))
+    #     count += 1
+    #
+    #     if stat is 'out':
+    #         out = out + 1
+    #     elif stat is 'into':
+    #         into = into + 1
+    #     else:
+    #         within = within + 1
+    for trip in trips:
+        if True:
             root.append(trip)
         else:
             continue
-        if count % 1000 == 0:
-            print("Trip: " + str(count))
-        count += 1
-
-        if stat is 'out':
-            out = out + 1
-        elif stat is 'into':
-            into = into + 1
-        else:
-            within = within + 1
-
     print("Trips going out: {}".format(out))
     print("Trips coming in: {}".format(into))
     print("Trips within: {}".format(within))
@@ -571,7 +736,7 @@ if __name__ == "__main__":
     on_off_parking_threshold = 7200  # 2 hours in seconds
     rm_modes = ['walk', 'bike']
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    city = 'san_francisco'
+    city = 'fairfield'
     dataset = '0.01'
     scenario_dir = "../cities/" + city + "/Scenario_Set_1"
     drop_off_only_percentage = 0 # percentage of on-street parking dedicated to drop-off only
