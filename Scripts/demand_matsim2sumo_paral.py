@@ -4,6 +4,7 @@ import numpy as np
 import operator
 import logging
 from shutil import copyfile
+import time
 
 try:
     from StringIO import StringIO
@@ -206,23 +207,24 @@ def getParkedEdge(to_edge_id, parkingAreas, TAZ_parking):
             parkedEdge = to_edge_id
         # otherwise
         else:
-            distance = float("inf")
-            for parkingArea in parkingAreas:
-                edge = parkingArea  # edge id
-                tmp_dist = traci.simulation.getDistanceRoad(edge, 0, to_edge_id, 0, True)
-                if tmp_dist < distance:
-                    distance = tmp_dist
-                    parkedEdge = edge
+            parkedEdge = random.choice(list(parkingAreas.keys()))
+            # distance = float("inf")
+            # for parkingArea in parkingAreas:
+            #     edge = parkingArea  # edge id
+            #     tmp_dist = traci.simulation.getDistanceRoad(edge, 0, to_edge_id, 0, True)
+            #     if tmp_dist < distance:
+            #         distance = tmp_dist
+            #         parkedEdge = edge
     else:
         weights = []
         for parking in TAZ_parking:
             try:
-                weights.append(int(parking.attrib["roadsideCapacity"]))
+                weights.append(int(parking["roadsideCapacity"]))
             except:
                 print('error here.')
         i = weighted_choice(weights)
-        lane = TAZ_parking[i].attrib["lane"]
-        parkedEdge = lane.split('_')[0]
+        # lane = TAZ_parking[i].attrib["lane"]
+        parkedEdge = TAZ_parking[i]["edge_id"]
     return parkedEdge
 
 def createTrip(data, net, BBox, offset, ODs, parkingAreas, type, duration, features_geometry, xform_reverse, TAZ_parking_dict, closest):
@@ -367,7 +369,8 @@ def getOD(ODFile):
     return {"origins": origins, "origin_weights": origin_weights, "destinations": destinations, "destination_weights": destination_weights}
 
 def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
-         drop_off_percentage):#, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off):
+         drop_off_percentage, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off,
+         TAZ_on_parking_dict, TAZ_off_parking_dict, TAZ_drop_off_parking_dict):#, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off):
     rnd = np.random.random()
     duration = int(trip["to_end_time"]) - int(trip["from_end_time"])  # trip duration
     # on-street drop-off
@@ -433,7 +436,7 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
                 if type is 'drop-off' and trip["to_type"] != 'home':
                     etree.SubElement(trip_element, "stop")
                     parkedEdge = getParkedEdge(to_edge_id, parkingAreas, None)
-                    trip_element.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
+                    trip_element.stop.set("parkingArea", parkingAreas[parkedEdge])
                     trip_element.stop.set("duration", str(duration))
                     # trip_element["stop"] = {"parkingArea": parkingAreas[parkedEdge].attrib["id"],
                     #                         "duration"}
@@ -471,7 +474,7 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
                     else:
                         TAZ_parking = TAZ_parking_dict[trip["to_taz"]]
                     parkedEdge = getParkedEdge(to_edge_id, parkingAreas, TAZ_parking)
-                    trip_element.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
+                    trip_element.stop.set("parkingArea", parkingAreas[parkedEdge])
                     trip_element.stop.set("duration", str(duration))
                 trip_element.set("direction", "into")
                 stat = 'into'
@@ -509,7 +512,7 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
                     else:
                         TAZ_parking = TAZ_parking_dict[trip["to_taz"]]
                     parkedEdge = getParkedEdge(to_edge_id, parkingAreas, TAZ_parking)
-                    trip_element.stop.set("parkingArea", parkingAreas[parkedEdge].attrib["id"])
+                    trip_element.stop.set("parkingArea", parkingAreas[parkedEdge])
                     trip_element.stop.set("duration", str(duration))
                 trip_element.set("direction", "within")
                 stat = 'within'
@@ -517,16 +520,10 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
         flag = False
     # Set departure time (in second) for this trip
     trip_element.set("depart", str(trip["from_end_time"]))
-    print('{} is done'.format(trip["trip_id"]))
+    if int(trip["trip_id"])%1000 == 0:
+        print('{} is done'.format(trip["trip_id"]))
 
     return trip_element#, flag, stat
-
-def func_wrap(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs):
-    try:
-        return func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs)
-    except:
-        # print('%s: %s' % (trip["trip_id"], traceback.format_exc()))
-        raise
 
 def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, dataset, drop_off_percentage, scenario_dir):
     """
@@ -551,60 +548,40 @@ def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parking
     ODs = getOD(ODFile)
 
     on_closest, off_closest, drop_off_closest = pk.closestTazWithParking(TAZ_on_parking_dict, TAZ_off_parking_dict, TAZ_drop_off_parking_dict, features_geometry)
-    count = 0
-    out = 0
-    into = 0
-    within = 0
+    count, out, into, within = 0, 0, 0, 0
+
+    parkingAreas_on_ids, parkingAreas_off_ids, parkingAreas_drop_off_ids = {}, {}, {}
+    for key in parkingAreas_on.keys():
+        parkingAreas_on_ids[key] = parkingAreas_on[key].attrib["id"]
+    for key in parkingAreas_off.keys():
+        parkingAreas_off_ids[key] = parkingAreas_off[key].attrib["id"]
+    for key in parkingAreas_drop_off.keys():
+        parkingAreas_drop_off_ids[key] = parkingAreas_drop_off[key].attrib["id"]
+    TAZ_on_parking_dict_ids, TAZ_off_parking_dict_ids, TAZ_drop_off_parking_dict_ids = {}, {}, {}
+    for key in TAZ_on_parking_dict.keys():
+        TAZ_on_parking_dict_ids[key] = [{"edge_id": parkingArea.attrib["lane"].split('_')[0],
+                                         "roadsideCapacity": parkingArea.attrib["roadsideCapacity"]}for parkingArea in TAZ_on_parking_dict[key]]
+    for key in TAZ_off_parking_dict.keys():
+        TAZ_off_parking_dict_ids[key] = [{"edge_id": parkingArea.attrib["lane"].split('_')[0],
+                                          "roadsideCapacity": parkingArea.attrib["roadsideCapacity"]} for parkingArea in TAZ_off_parking_dict[key]]
+    for key in TAZ_drop_off_parking_dict.keys():
+        TAZ_drop_off_parking_dict_ids[key] = [{"edge_id": parkingArea.attrib["lane"].split('_')[0],
+                                               "roadsideCapacity": parkingArea.attrib["roadsideCapacity"]} for parkingArea in TAZ_drop_off_parking_dict[key]]
 
     from functools import partial
     from multiprocessing import Pool, get_context
-    sys.setrecursionlimit(10000)
-    p = get_context('spawn').Pool(processes=2)
+    sys.setrecursionlimit(10000000)
+    p = get_context('spawn').Pool(processes=12)
     trips = p.map(partial(func, on_closest=on_closest, off_closest=off_closest,
                           drop_off_closest=drop_off_closest, net=net,
-                          offset=offset, ODs=ODs, drop_off_percentage=drop_off_percentage), trips_sorted)
+                          offset=offset, ODs=ODs, drop_off_percentage=drop_off_percentage,
+                          parkingAreas_on=parkingAreas_on_ids,
+                          parkingAreas_off=parkingAreas_off_ids, parkingAreas_drop_off=parkingAreas_drop_off_ids,
+                          TAZ_on_parking_dict=TAZ_on_parking_dict_ids, TAZ_off_parking_dict=TAZ_off_parking_dict_ids,
+                          TAZ_drop_off_parking_dict=TAZ_drop_off_parking_dict_ids), trips_sorted)
     p.close()
     p.join()
-    print('Done!!!!')
-    # for trip in trips_sorted:
-    #     rnd = np.random.random()
-    #     duration = int(trip["to_end_time"]) - int(trip["from_end_time"]) # trip duration
-    #     # on-street drop-off
-    #     if rnd <= drop_off_percentage:
-    #         parkingAreas = parkingAreas_drop_off
-    #         TAZ_parking_dict = TAZ_drop_off_parking_dict
-    #         type = 'drop-off'
-    #         duration = 20
-    #         closest = drop_off_closest
-    #     else:
-    #         # off-street parking
-    #         if duration >= on_off_parking_threshold:
-    #             parkingAreas = parkingAreas_off
-    #             TAZ_parking_dict = TAZ_off_parking_dict
-    #             type = 'off'
-    #             closest = off_closest
-    #         # on-street parking
-    #         else:
-    #             parkingAreas = parkingAreas_on
-    #             TAZ_parking_dict = TAZ_on_parking_dict
-    #             type = 'on'
-    #             closest = on_closest
-    #     trip, flag, stat = createTrip(trip, net, BBox, offset, ODs, parkingAreas, type, duration, features_geometry, xform_reverse, TAZ_parking_dict, closest)
-    #
-    #     if flag:
-    #         root.append(trip)
-    #     else:
-    #         continue
-    #     if count % 1000 == 0:
-    #         print("Trip: " + str(count))
-    #     count += 1
-    #
-    #     if stat is 'out':
-    #         out = out + 1
-    #     elif stat is 'into':
-    #         into = into + 1
-    #     else:
-    #         within = within + 1
+
     for trip in trips:
         if True:
             root.append(trip)
@@ -632,8 +609,6 @@ def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parking
         print("TripXML created successfully!")
     except IOError:
         pass
-
-
 
 def randomPointInFeature(feature):
     bounds = feature.boundingBox()
@@ -736,8 +711,8 @@ if __name__ == "__main__":
     on_off_parking_threshold = 7200  # 2 hours in seconds
     rm_modes = ['walk', 'bike']
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    city = 'fairfield'
-    dataset = '0.01'
+    city = 'fairfield'#'san_francisco'
+    dataset = 'all_7'
     scenario_dir = "../cities/" + city + "/Scenario_Set_1"
     drop_off_only_percentage = 0 # percentage of on-street parking dedicated to drop-off only
     drop_off_percentage = 0.5 # percentage of drop-off trips
@@ -829,6 +804,7 @@ if __name__ == "__main__":
     createAndSaveTripXML(trips_randomized, "../cities/" + city + "/originaltrip_with_randomizedOD.xml")
     # del trips_sorted
 
+    start = time.time()
     # createVehicleXML(trips_sorted)
     createTripXML(city, trips_randomized, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, dataset, drop_off_percentage, scenario_dir)
 
@@ -836,3 +812,5 @@ if __name__ == "__main__":
     traci.close()
     # exit qgis
     qgs.exitQgis()
+
+    print('Total running time = {} seconds.'.format(time.time() - start))

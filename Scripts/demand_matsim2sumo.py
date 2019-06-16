@@ -20,6 +20,7 @@ else:
 import sumolib
 import traci
 import traci.constants as tc
+import time
 
 from qgis.core import *
 
@@ -571,8 +572,8 @@ if __name__ == "__main__":
     on_off_parking_threshold = 7200  # 2 hours in seconds
     rm_modes = ['walk', 'bike']
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    city = 'san_francisco'
-    dataset = '0.01'
+    city = 'fairfield'
+    dataset = 'all_7'
     scenario_dir = "../cities/" + city + "/Scenario_Set_1"
     drop_off_only_percentage = 0 # percentage of on-street parking dedicated to drop-off only
     drop_off_percentage = 0.5 # percentage of drop-off trips
@@ -664,6 +665,7 @@ if __name__ == "__main__":
     createAndSaveTripXML(trips_randomized, "../cities/" + city + "/originaltrip_with_randomizedOD.xml")
     # del trips_sorted
 
+    start = time.time()
     # createVehicleXML(trips_sorted)
     createTripXML(city, trips_randomized, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, dataset, drop_off_percentage, scenario_dir)
 
@@ -671,3 +673,5 @@ if __name__ == "__main__":
     traci.close()
     # exit qgis
     qgs.exitQgis()
+
+    print('Total running time = {} seconds.'.format(time.time() - start))
