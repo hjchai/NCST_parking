@@ -4,6 +4,7 @@ import numpy as np
 import operator
 import logging
 from shutil import copyfile
+import pandas as pd
 
 try:
     from StringIO import StringIO
@@ -451,6 +452,23 @@ def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parking
     print("Trips within: {}".format(within))
     print("Total trips: {}".format(count))
 
+    header = ['scenario', 'out', 'into', 'within']
+    stat = [['trip_' + dataset + '_with_' + str(drop_off_percentage) + '_drop-off.xml',
+             str(out), str(into), str(within)]]
+    stat_df = pd.DataFrame(columns=header, data=stat)
+    if os.path.exists(scenario_dir + '/trip_stats.log'):
+        stats = pd.read_csv(scenario_dir + '/trip_stats.log', sep=",", )
+        if stats[stats['scenario']==stat[0][0]].empty:
+            stats = stats.drop(['Unnamed: 0'], axis=1)
+            stats = stats.append(stat_df, ignore_index=True)
+        else:
+            stats[stats['scenario'] == stat[0][0]] = stat_df
+            stats = stats.drop(['Unnamed: 0'], axis=1)
+    else:
+        stats = stat_df
+    stats.to_csv(scenario_dir + '/trip_stats.log', sep=',')
+
+
     # remove lxml annotation
     objectify.deannotate(root)
     etree.cleanup_namespaces(root)
@@ -572,11 +590,11 @@ if __name__ == "__main__":
     on_off_parking_threshold = 7200  # 2 hours in seconds
     rm_modes = ['walk', 'bike']
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    city = 'fairfield'
-    dataset = 'all_7'
+    city = 'san_francisco'
+    dataset = '0.01'
     scenario_dir = "../cities/" + city + "/Scenario_Set_1"
     drop_off_only_percentage = 0 # percentage of on-street parking dedicated to drop-off only
-    drop_off_percentage = 0.5 # percentage of drop-off trips
+    drop_off_percentage = 0.0 # percentage of drop-off trips
     capacity_increase = 0.25 # capacity increase of remaining off-street parking structures
 
     traci.start(["sumo", "-c", "../cities/" + city + "/dummy.sumo.cfg"]) #initialize connect to traci using a dummy sumo cfg file
@@ -657,11 +675,11 @@ if __name__ == "__main__":
 
     trips = parseXML('../cities/' + city + '/' + city + '_plans_' + dataset + '.xml', flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False
 
-    # trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
+    trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
     createAndSaveTripXML(trips, "../cities/" + city + "/originaltrip.xml")
     # del trips
 
-    trips_randomized = randomizeOriginDestination(trips, features_geometry, xform, xform_reverse)
+    trips_randomized = randomizeOriginDestination(trips_sorted, features_geometry, xform, xform_reverse)
     createAndSaveTripXML(trips_randomized, "../cities/" + city + "/originaltrip_with_randomizedOD.xml")
     # del trips_sorted
 

@@ -428,10 +428,7 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
             if from_edge is None or from_edge_id in ODs["destinations"]:
                 flag = False
                 trip_element.set("from", "")
-                # trip_element["from"] = ""
-
             else:
-                # trip_element.set("from", from_edge_id)
                 trip_element["from"] = from_edge_id
                 if type is 'drop-off' and trip["to_type"] != 'home':
                     etree.SubElement(trip_element, "stop")
@@ -711,11 +708,11 @@ if __name__ == "__main__":
     on_off_parking_threshold = 7200  # 2 hours in seconds
     rm_modes = ['walk', 'bike']
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    city = 'fairfield'#'san_francisco'
-    dataset = 'all_7'
+    city = 'san_francisco'#'san_francisco'
+    dataset = '0.01'
     scenario_dir = "../cities/" + city + "/Scenario_Set_1"
     drop_off_only_percentage = 0 # percentage of on-street parking dedicated to drop-off only
-    drop_off_percentage = 0.5 # percentage of drop-off trips
+    drop_off_percentage = 0.0 # percentage of drop-off trips
     capacity_increase = 0.25 # capacity increase of remaining off-street parking structures
 
     traci.start(["sumo", "-c", "../cities/" + city + "/dummy.sumo.cfg"]) #initialize connect to traci using a dummy sumo cfg file
