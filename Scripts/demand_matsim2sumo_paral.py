@@ -568,7 +568,7 @@ def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parking
     from functools import partial
     from multiprocessing import Pool, get_context
     sys.setrecursionlimit(10000000)
-    p = get_context('spawn').Pool(processes=12)
+    p = get_context('spawn').Pool(processes=10)
     trips = p.map(partial(func, on_closest=on_closest, off_closest=off_closest,
                           drop_off_closest=drop_off_closest, net=net,
                           offset=offset, ODs=ODs, drop_off_percentage=drop_off_percentage,
@@ -709,7 +709,7 @@ if __name__ == "__main__":
     rm_modes = ['walk', 'bike']
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
     city = 'san_francisco'#'san_francisco'
-    dataset = '0.01'
+    dataset = '0.05'
     scenario_dir = "../cities/" + city + "/Scenario_Set_1"
     drop_off_only_percentage = 0 # percentage of on-street parking dedicated to drop-off only
     drop_off_percentage = 0.0 # percentage of drop-off trips

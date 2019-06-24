@@ -224,7 +224,7 @@ def getTripStats(tripXML):
 if __name__ == "__main__":
     city = 'san_francisco'
     # parseParking('/home/huajun/Desktop/NCST_parking/cities/fairfield/on-parking.add.xml')
-    count, total_capacity = parkingStats('/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_1/on_parking.add.xml')
+    count, total_capacity = parkingStats('/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_1/off_parking.working.add.xml')
     print(count, total_capacity)
     # getAllModes('/home/huajun/Desktop/NCST_parking/cities/san_francisco/san_francisco_plans_all_7.xml')
     # getTripStats('/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_1/trip_all_7_with_0.5_drop-off.xml')

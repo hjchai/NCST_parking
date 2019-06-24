@@ -38,7 +38,7 @@
   <origin id="123867455"      weight="2"> </origin>
   <origin id="-160313263#1"   weight="2"> </origin>
   <origin id="-133755930#1"   weight="2"> </origin>
-  <origin id="90077241"       weight="10"> </origin>
+  <origin id="90077241"       weight="3"> </origin>
 
   <destination id="27570802#1"    weight="1"> </destination>
   <destination id="27570786#2"    weight="1"> </destination>
@@ -76,12 +76,6 @@
   <destination id="8918874"       weight="1"> </destination>
   <destination id="52432936#1"    weight="2"> </destination>
   <destination id="133755930#1"   weight="2"> </destination>
-  <destination id="50690291#1"    weight="10"> </destination>
+  <destination id="50690291#1"    weight="3"> </destination>
 
-
-
-  <pg id="P1">
-  </pg>
-  <pg id="P2">
-  </pg>
 </ods>
