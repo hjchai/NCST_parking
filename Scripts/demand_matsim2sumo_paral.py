@@ -402,7 +402,7 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
     # trip_element = objectify.Element("trip")
     trip_element = {}
     # trip_element.set("id", trip["trip_id"] + '_' + type)
-    trip_element["trip_id"] = trip["trip_id"]
+    trip_element["id"] = trip["trip_id"]
     trip_element["trip_type"] = type
     # trip_element.set("type", "passenger")
     trip_element["type"] = "passenger"
@@ -463,7 +463,7 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
             # trip_element.set("from", from_edge_id)
             trip_element["from"] = from_edge_id
             # to_edge = getClosestEdge(float(trip["to_x"]) + offset[0], float(trip["to_y"]) + offset[1], net, radius)
-            to_edge_id = TAZ_edge_dict[trip["to_taz"]]
+            to_edge_id = random.choice(TAZ_edge_dict[trip["to_taz"]])
             # if to_edge is not None:
             #     to_edge_id = to_edge.getID()
             if to_edge_id in ODs["origins"]:
@@ -499,7 +499,7 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
         else:
             # from_edge = getClosestEdge(float(trip["from_x"]) + offset[0], float(trip["from_y"]) + offset[1], net,
             #                            radius)
-            from_edge_id = TAZ_edge_dict[trip["from_taz"]]
+            from_edge_id = random.choice(TAZ_edge_dict[trip["from_taz"]])
             # if from_edge is not None:
             #     from_edge_id = from_edge.getID()
             if from_edge_id in ODs["destinations"]:
@@ -511,7 +511,7 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
                 trip_element["from"] = from_edge_id
 
             # to_edge = getClosestEdge(float(trip["to_x"]) + offset[0], float(trip["to_y"]) + offset[1], net, radius)
-            to_edge_id = TAZ_edge_dict[trip["to_taz"]]
+            to_edge_id = random.choice(TAZ_edge_dict[trip["to_taz"]])
             # if to_edge is not None:
             #     to_edge_id = to_edge.getID()
             if to_edge_id in ODs["origins"]:
@@ -753,7 +753,7 @@ if __name__ == "__main__":
     dataset = '0.05'
     scenario_dir = "../cities/" + city + "/Scenario_Set_1"
     drop_off_only_percentage = 0 # percentage of on-street parking dedicated to drop-off only
-    drop_off_percentage = 0.0 # percentage of drop-off trips
+    drop_off_percentage = 0.5 # percentage of drop-off trips
     capacity_increase = 0.25 # capacity increase of remaining off-street parking structures
 
     traci.start(["sumo", "-c", "../cities/" + city + "/dummy.sumo.cfg"]) #initialize connect to traci using a dummy sumo cfg file
