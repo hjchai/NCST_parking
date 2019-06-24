@@ -30,7 +30,7 @@ def splitDropoffAndOnParking(total_parking_xml, drop_off_only_percentage):
     return additional
 
 
-def edgeToTaz(edges, features_geometry, net, xform_reverse):
+def edgeToTAZs(edges, features_geometry, net, xform_reverse):
     TAZ_edge_dict = {}
     offset = net.getLocationOffset()
     for i in range(len(features_geometry)):
@@ -269,6 +269,6 @@ if __name__ == "__main__":
     import time
 
     start = time.time()
-    TAZ_edge_dict = edgeToTaz(edges, features_geometry, net, xform_reverse)
+    TAZ_edge_dict = edgeToTAZs(edges, features_geometry, net, xform_reverse)
     print('Single thread takes {} seconds.'.format(time.time() - start))
 
