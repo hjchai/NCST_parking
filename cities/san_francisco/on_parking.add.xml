@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on Wed 12 Jun 2019 06:31:19 PM PDT by Eclipse SUMO netedit Version v1_1_0+0000-2147d155b1
+<!-- generated on Mon 24 Jun 2019 12:35:11 PM PDT by Eclipse SUMO netedit Version v1_0_1+0000-b43a3e4816
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
 
     <input>
@@ -12,7 +12,6 @@
     </output>
 
     <processing>
-        <geometry.max-grade.fix value="false"/>
         <offset.disable-normalization value="true"/>
         <lefthand value="false"/>
     </processing>
@@ -1256,7 +1255,7 @@
     <parkingArea id="parkingArea_8918381#0_0_537" lane="8918381#0_0" roadsideCapacity="9" startPos="10.68" endPos="37.68"/>
     <parkingArea id="parkingArea_8918381#1_0_536" lane="8918381#1_0" roadsideCapacity="5" startPos="14.96" endPos="29.96"/>
     <parkingArea id="parkingArea_8918460#0_0_395" lane="8918460#0_0" roadsideCapacity="43" startPos="48.05" endPos="134.05"/>
-    <parkingArea id="parkingArea_8918656#1_1_375" lane="8918656#1_1" roadsideCapacity="16" startPos="34.42" endPos="98.42"/>
+    <parkingArea id="parkingArea_8918656#0_0_1350" lane="8918656#0_0" roadsideCapacity="16" startPos="55.19" endPos="135.19"/>
     <parkingArea id="parkingArea_8918992#1_0_646" lane="8918992#1_0" roadsideCapacity="25" startPos="32.95" endPos="107.95"/>
     <parkingArea id="parkingArea_8918992#3_0_647" lane="8918992#3_0" roadsideCapacity="84" startPos="14.30" endPos="56.30"/>
     <parkingArea id="parkingArea_8919058_0_999" lane="8919058_0" roadsideCapacity="9" startPos="24.60" endPos="64.60"/>
