@@ -2,6 +2,7 @@ from lxml import etree, objectify
 from qgis.core import *
 import sys
 import numpy as np
+import os
 
 def parseParking(xmlfile):
     parkingAreas = {}
@@ -9,8 +10,6 @@ def parseParking(xmlfile):
         xml = fobj.read()
         xml = bytes(bytearray(xml, encoding='utf-8'))
         additional = etree.parse(xmlfile).getroot()
-
-        #print(additional.tag)
 
         for parkingArea in additional.getchildren():
 
@@ -20,6 +19,28 @@ def parseParking(xmlfile):
             edge = lane.split('_')[0]
             parkingAreas[edge] = parkingArea
     return parkingAreas
+
+def loadParkingFacility(xmlfile):
+    pk_type = os.path.basename(xmlfile).split('_')[0]
+    parkingAreas = {}
+    total_capacity = 0
+    with open(xmlfile) as fobj:
+        xml = fobj.read()
+        xml = bytes(bytearray(xml, encoding='utf-8'))
+        additional = etree.parse(xmlfile).getroot()
+
+        for parkingArea in additional.getchildren():
+
+            pk = {}
+            pk['id'] = parkingArea.attrib['id']
+            pk['type'] = pk_type
+            pk['capacity'] = int(parkingArea.attrib['roadsideCapacity'])
+            pk['occupancy'] = 0
+            pk['rate'] = 0
+
+            parkingAreas[pk['id']] = pk
+            total_capacity += pk['capacity']
+    return parkingAreas, total_capacity
 
 def splitDropoffAndOnParking(total_parking_xml, drop_off_only_percentage):
     root = etree.parse(total_parking_xml).getroot()
@@ -91,16 +112,6 @@ def parkingToTAZs(features_geometry, parkingAreas, net, xform_reverse):
                 #     parking_not_inside_taz_tey.append((key, midPointGeometry))
         if index == len(features_geometry):
             print('Parkingarea {} is not within boundary.'.format(parking_edge_id))
-    # for parking in parking_not_inside_taz_tey:
-    #     dist = sys.maxsize
-    #     feature_geometry_index = 0
-    #     for feature_geometry in features_geometry:
-    #         dist_tmp = feature_geometry.distance(parking[1])
-    #         if dist_tmp < dist:
-    #             dist = dist_tmp
-    #             candidate_index = feature_geometry_index
-    #         feature_geometry_index += 1
-    #     TAZ_parking_dict[str(candidate_index)].append(parkingAreas[parking[0]])
     return TAZ_parking_dict
 
 def closestTazWithParking(on_dict, off_dict, dropoff_dict, geo_features):

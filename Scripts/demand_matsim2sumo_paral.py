@@ -334,7 +334,6 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
                 trip_element["to"] = to_edge_id
             # trip_element.set("direction", "out")
             trip_element["direction"] = "out"
-
         #### trip going into polygon:
         #
         ####
@@ -426,12 +425,14 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
     # Set departure time (in second) for this trip
     # trip_element.set("depart", str(trip["from_end_time"]))
     trip_element["depart"] = trip["from_end_time"]
+    trip_element["end"] = trip["to_end_time"]
     if int(trip["trip_id"])%1000 == 0:
         print('{} is done'.format(trip["trip_id"]))
 
     return trip_element
 
-def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, dataset, drop_off_percentage, scenario_dir):
+def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off,
+                  dataset, drop_off_percentage, scenario_dir, drop_off_only_percentage):
     """
        Create an XML file
     """
@@ -526,7 +527,8 @@ def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parking
                              encoding="utf-8")
 
     try:
-        with open(scenario_dir + '/trip_' + dataset + '_with_' + str(drop_off_percentage) + '_drop-off.xml', "wb") as xml_writer:
+        with open(scenario_dir + '/trip_' + dataset + '_with_' + str(drop_off_percentage) + '_drop-off_'
+                  + '{:.1f}'.format(drop_off_only_percentage) + '_drop-off_only.xml', "wb") as xml_writer:
             xml_writer.write(obj_xml)
         xml_writer.close()
         print("TripXML created successfully!")
@@ -632,9 +634,9 @@ if __name__ == "__main__":
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
     city = 'san_francisco'
     dataset = '0.01'
-    scenario_dir = "../cities/" + city + "/Scenario_Set_1"
-    drop_off_only_percentage = 0 # percentage of on-street parking dedicated to drop-off only
-    drop_off_percentages = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] # percentage of drop-off trips
+    scenario_dir = "../cities/" + city + "/Scenario_Set_2"
+    drop_off_only_percentages = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] # percentage of on-street parking dedicated to drop-off only
+    drop_off_percentages = [0.5]#[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] # percentage of drop-off trips
     capacity_increase = 0.25 # capacity increase of remaining off-street parking structures
 
     traci.start(["sumo", "-c", "../cities/" + city + "/dummy.sumo.cfg"]) #initialize connect to traci using a dummy sumo cfg file
@@ -664,73 +666,72 @@ if __name__ == "__main__":
         # retrieve every feature with its geometry and attributes
         features_geometry.append(feature.geometry())
 
-    # drop-off
+    # read in all trips for later processing
+    start = time.time()
+    trips = parseXML('../cities/' + city + '/' + city + '_plans_' + dataset + '.xml',
+                     flags_dict[dataset])  # For 'plans_all_7', set to True; otherwise, set to False
+    print('Parsing xml takes {} seconds.'.format(time.time() - start))
+    createAndSaveTripXML(trips, "../cities/" + city + "/originaltrip.xml")
+
+    # copy original on street parking into drop-off parking
     if not os.path.exists(scenario_dir):
         os.makedirs(scenario_dir)
+        os.makedirs(scenario_dir + '/results')
+        os.makedirs(scenario_dir + 'plots')
     copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/drop_off_parking.add.xml")
     parkingAreas_drop_off = pk.parseParking(
         scenario_dir + "/drop_off_parking.add.xml")  # parking spots that are used for drop-off traffic
-    if scenario_dir[-1] == '1':
-        # on-street
-        copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/on_parking.add.xml")
-        parkingAreas_on = pk.parseParking(
-            scenario_dir + "/on_parking.add.xml")  # parking spots that are used for both drop-off traffic and on-street parking traffic
-        # off-street
-        copyfile("../cities/" + city + "/off_parking.add.xml", scenario_dir + "/off_parking.add.xml")
-        parkingAreas_off = pk.parseParking(
-            scenario_dir + '/off_parking.add.xml')  # parking spots that are used for off street parking
-    elif scenario_dir[-1] == '2':
-        # on-street
-        parkingAreas_on_OBJ = pk.splitDropoffAndOnParking("../cities/" + city + "/on_parking.add.xml", drop_off_only_percentage)
-        with open(scenario_dir + "/on_parking_" + str(1 - drop_off_only_percentage) + ".add.xml", "w") as f_obj:
-            parkingAreas_on_xml = etree.tostring(parkingAreas_on_OBJ, pretty_print=True, xml_declaration=False, encoding="utf-8").decode("utf-8")
-            f_obj.write(parkingAreas_on_xml)
-        parkingAreas_on = pk.parseParking(
-            scenario_dir + "/on_parking_" + str(1 - drop_off_only_percentage) + ".add.xml") # parking spots that are used for both drop-off traffic and on-street parking traffic
-        # off-street
-        copyfile("../cities/" + city + "/off_parking.add.xml", scenario_dir + "/off_parking.add.xml")
-        parkingAreas_off = pk.parseParking(
-            scenario_dir + '/off_parking.add.xml')  # parking spots that are used for off street parking
-    elif scenario_dir[-1] == '3':
-        # on-street
-        copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/on_parking.add.xml")
-        parkingAreas_on = pk.parseParking(
-            scenario_dir + "/on_parking.add.xml")  # parking spots that are used for both drop-off traffic and on-street parking traffic
-        # off-street
-        # todo: scenario 3
-        parkingAreas_off = pk.parseParking('../cities/' + city + '/off_parking.add.xml') # parking spots that are used for off street parking
-    else:
-        raise Exception('Wrong Scenario Directory!')
 
-    print('Import parking data done.')
+    for drop_off_only_percentage in drop_off_only_percentages:
+        if scenario_dir[-1] == '1':
+            # on-street
+            copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/on_parking.add.xml")
+            parkingAreas_on = pk.parseParking(
+                scenario_dir + "/on_parking.add.xml")  # parking spots that are used for both drop-off traffic and on-street parking traffic
+            # off-street
+            copyfile("../cities/" + city + "/off_parking.add.xml", scenario_dir + "/off_parking.add.xml")
+            parkingAreas_off = pk.parseParking(
+                scenario_dir + '/off_parking.add.xml')  # parking spots that are used for off street parking
+        elif scenario_dir[-1] == '2':
+            # on-street
+            parkingAreas_on_OBJ = pk.splitDropoffAndOnParking("../cities/" + city + "/on_parking.add.xml", drop_off_only_percentage)
+            with open(scenario_dir + "/on_parking_" + '{:.1f}'.format(1 - drop_off_only_percentage) + ".add.xml", "w") as f_obj:
+                parkingAreas_on_xml = etree.tostring(parkingAreas_on_OBJ, pretty_print=True, xml_declaration=False, encoding="utf-8").decode("utf-8")
+                f_obj.write(parkingAreas_on_xml)
+            parkingAreas_on = pk.parseParking(
+                scenario_dir + "/on_parking_" + '{:.1f}'.format(1 - drop_off_only_percentage) + ".add.xml") # parking spots that are used for both drop-off traffic and on-street parking traffic
+            # off-street
+            copyfile("../cities/" + city + "/off_parking.add.xml", scenario_dir + "/off_parking.add.xml")
+            parkingAreas_off = pk.parseParking(
+                scenario_dir + '/off_parking.add.xml')  # parking spots that are used for off street parking
+        elif scenario_dir[-1] == '3':
+            # on-street
+            copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/on_parking.add.xml")
+            parkingAreas_on = pk.parseParking(
+                scenario_dir + "/on_parking.add.xml")  # parking spots that are used for both drop-off traffic and on-street parking traffic
+            # off-street
+            # todo: scenario 3
+            parkingAreas_off = pk.parseParking('../cities/' + city + '/off_parking.add.xml') # parking spots that are used for off street parking
+        else:
+            raise Exception('Wrong Scenario Directory!')
 
-    net = sumolib.net.readNet('../cities/' + city + '/' + city + '.net.xml')
-    edges = net.getEdges()
-    generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, edges)
+        print('Import parking data done.')
 
-    TAZ_on_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_on, net, xform_reverse)
-    TAZ_drop_off_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_drop_off, net, xform_reverse)
-    TAZ_off_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_off, net, xform_reverse)
-    print('Parking to TAZ done.')
-    TAZ_edge_dict = pk.edgeToTAZs(edges, features_geometry, net, xform_reverse)
+        net = sumolib.net.readNet('../cities/' + city + '/' + city + '.net.xml')
+        edges = net.getEdges()
+        generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, edges)
 
-    start = time.time()
-    trips = parseXML('../cities/' + city + '/' + city + '_plans_' + dataset + '.xml', flags_dict[dataset]) # For 'plans_all_7', set to True; otherwise, set to False
-    print('Parsing xml takes {} seconds.'.format(time.time() - start))
+        TAZ_on_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_on, net, xform_reverse)
+        TAZ_drop_off_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_drop_off, net, xform_reverse)
+        TAZ_off_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_off, net, xform_reverse)
+        print('Parking to TAZ done.')
+        TAZ_edge_dict = pk.edgeToTAZs(edges, features_geometry, net, xform_reverse)
 
-    # trips_sorted = sorted(trips, key=lambda k: k['from_end_time'])
-    createAndSaveTripXML(trips, "../cities/" + city + "/originaltrip.xml")
-    # del trips
-
-    # trips_randomized = randomizeOriginDestination(trips, features_geometry, xform, xform_reverse)
-    # createAndSaveTripXML(trips_randomized, "../cities/" + city + "/originaltrip_with_randomizedOD.xml")
-    # del trips_sorted
-
-    # createVehicleXML(trips_sorted)
-    for drop_off_percentage in drop_off_percentages:
-        start = time.time()
-        createTripXML(city, trips, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, dataset, drop_off_percentage, scenario_dir)
-        print('Total running time = {} seconds.'.format(time.time() - start))
+        for drop_off_percentage in drop_off_percentages:
+            start = time.time()
+            createTripXML(city, trips, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off,
+                          dataset, drop_off_percentage, scenario_dir, drop_off_only_percentage)
+            print('Total running time = {} seconds.'.format(time.time() - start))
 
     # close traci connection
     traci.close()

@@ -71,7 +71,7 @@ if __name__ == "__main__":
     city = 'san_francisco'
     city_shapefile = '../cities/' + city + '/shp/' + city + '.shp'
     flags_dict = {'all_7': True, '0.01': False, '0.05': False}
-    dataset = 'all_7'
+    dataset = '0.05'
     source_dataset = '../Caroline_NCST_Data/Scenario_1/matsim_input/plans_' + dataset + '.xml'
     target_dataset = '../cities/' + city + '/' + city + '_plans_' + dataset + '.xml'
 

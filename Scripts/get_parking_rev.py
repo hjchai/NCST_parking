@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 from math import ceil
 import matplotlib.pyplot as plt
-
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 
 
 def Parkingtime(xmlfile):
@@ -15,14 +16,14 @@ def Parkingtime(xmlfile):
 
         ids = []
         types = []
-        departs = []
+        ends = []
         durations = []
         stop = {}
         duration = 0
         for parkingid in additional.getchildren():
             ids.append(parkingid.attrib['id'])
             types.append(parkingid.attrib['trip_type'])
-            departs.append(int(parkingid.attrib['depart']))
+            ends.append(int(parkingid.attrib['end']))
 
             for stop in parkingid.getchildren():
                 if stop is None:
@@ -31,7 +32,7 @@ def Parkingtime(xmlfile):
                     duration = int(stop.attrib['duration'])
             durations.append(duration)
 
-    return pd.DataFrame(ids),pd.DataFrame(types),pd.DataFrame(departs),pd.DataFrame(durations)
+    return pd.DataFrame(ids),pd.DataFrame(types),pd.DataFrame(ends),pd.DataFrame(durations)
 
 
 
@@ -88,20 +89,71 @@ def plot_bar(df):
     plt.show()
 
 
-# #Parkingtime('../../cities/san_francisco/Scenario_Set_1/trip_0.01_with_0.5_drop-off.xml')
+def hist(df):
+    types = df['type'].values
+    durations = df['duration'].values
+    ends = df['end'].values
+    occ = np.zeros((96,3))
+    starts = ends-durations
+    for type, start, end in zip(types,starts,ends):
+        start_ind = start//900
+        end_ind = ceil(end/900)-1
+        occ_ind = np.arange(start_ind,min(end_ind+1,96))
+        i = 0*(type == 'on')+ 1 * (type == 'off') + 2 *(type =='drop-off')
+        for j in occ_ind:
+            occ[j,i] +=1
+    return occ
+
+
+def hist_plot(list):
+    occ = np.array(list)
+    #print(occ.shape)
+    X, Y = np.meshgrid(np.arange(0,24,0.25), np.arange(0,110,10))
+    Z1 = occ[:,:,0]
+    Z2 = occ[:,:,1]
+    Z3 = occ[:,:,2]
+    fig = plt.figure(figsize=(12,10))
+    ax = fig.add_subplot(221, projection='3d')
+    ax.plot_surface(X,Y,Z1,cmap=cm.coolwarm)
+    ax.set_xlabel('Time of day')
+    ax.set_ylabel('Percentage (%)')
+    ax.set_zlabel('Occupancy')
+    ax.set_title('On street Occupancy')
+    ax = fig.add_subplot(222, projection='3d')
+    ax.plot_surface(X, Y, Z2, cmap=cm.coolwarm)
+    ax.set_xlabel('Time of day')
+    ax.set_ylabel('Percentage (%)')
+    ax.set_zlabel('Occupancy')
+    ax.set_title('Off street Occupancy')
+    ax = fig.add_subplot(223, projection='3d')
+    ax.plot_surface(X, Y, Z3, cmap=cm.coolwarm)
+    ax.set_xlabel('Time of day')
+    ax.set_ylabel('Percentage (%)')
+    ax.set_zlabel('Occupancy')
+    ax.set_title('Drop-Off Occupancy')
+    plt.savefig("../cities/san_francisco/Scenario_Set_1/plots/occupancy_vs_dropoff_percentage.png",bbox_inches='tight', dpi=1000)
+    plt.show()
+
+
+
 
 tot = pd.DataFrame(columns=['on','off','drop-off']) # create a　dataframe to store all the total cost
-
-for l in ['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']:
-    df_id,df_type,df_departs,df_durations = Parkingtime('/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_1/trip_0.01_with_' + l + '_drop-off.xml')
-    out = pd.concat([df_id,df_type,df_departs,df_durations],axis=1)
-    out.columns = ['id','type','depart','duration']
-
+occupacy = []
+list = ['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
+for l in list:
+    df_id,df_type,df_end,df_durations = Parkingtime('/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_1/trip_0.01_with_' + l + '_drop-off.xml')
+    out = pd.concat([df_id,df_type,df_end,df_durations],axis=1)
+    out.columns = ['id','type','end','duration']
+    ## calculate cost
     out_cost = parking_cost(out)
 
     on,off,drop = total_cost(out_cost)
     newrow = {'on':on,'off':off,'drop-off':drop}
     tot = tot.append(newrow,ignore_index=True)
 
-print(tot)
-plot_bar(tot)
+    ## calculate occupancy
+    occupacy.append(hist(out))
+
+# print(tot)
+# plot_bar(tot)
+hist_plot(occupacy)
