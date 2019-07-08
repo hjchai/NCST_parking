@@ -166,5 +166,56 @@ drop_off_percentages = ['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0
 # plotVMT()
 # plotQueue()
 # plotTraveltime()
-emissions = plotEmission()
-print(['{:.2f}'.format(e) for e in emissions[2]])
+# emissions = plotEmission()
+# print(['{:.2f}'.format(e) for e in emissions[2]])
+
+######
+def Trip_count(xmlfile,t1=6,t2=10,t3=15,t4=19):
+    parkingid = {}
+    with open(xmlfile) as fobj:
+        xml = fobj.read()
+        xml = bytes(bytearray(xml, encoding='utf-8'))
+        additional = etree.parse(xmlfile).getroot()
+
+        departs = []
+
+        for parkingid in additional.getchildren():
+            departs.append(int(parkingid.attrib['depart']))
+        count = np.zeros(5)
+        for depart in departs:
+            if depart < t1 * 3600:
+                count[0] +=1
+            elif depart < t2 *3600:
+                count[1] +=1
+            elif depart < t3 *3600:
+                count[2] +=1
+            elif depart < t4 *3600:
+                count[3] +=1
+            else:
+                count[4] +=1
+
+    return count
+
+
+# count = Trip_count('../cities/san_francisco/Scenario_Set_1/trip_0.01_with_' + '0.0' + '_drop-off.xml')
+# print(count,count.sum(),count/count.sum())
+
+def OD_count(xmlfile, ODs=45):
+    from_tazs = np.zeros(ODs)
+    to_tazs = np.zeros((ODs))
+    routes = etree.parse(xmlfile).getroot()
+    sum = 0
+    for trip in routes.getchildren():
+        from_taz = trip.attrib['from_taz']
+        to_taz = trip.attrib['to_taz']
+        if from_taz != '':
+            from_tazs[int(from_taz)] += 1
+        if to_taz != '':
+            to_tazs[int(to_taz)] += 1
+        if trip.attrib['trip_type'] == 'drop-off':
+            sum +=1
+    print(sum)
+    return from_tazs, to_tazs
+
+origin, destination = OD_count('../cities/san_francisco/Scenario_Set_1/trip_0.01_with_' + '1.0' + '_drop-off.xml')
+print(origin, origin.sum(),destination,destination.sum())
