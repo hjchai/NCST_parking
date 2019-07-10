@@ -287,59 +287,41 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
         """
     flag = True  # set the flag to determin if closestedge is found or not
     radius = 200
-    # trip_element = objectify.Element("trip")
     trip_element = {}
-    # trip_element.set("id", trip["trip_id"] + '_' + type)
     trip_element["id"] = trip["trip_id"]
     trip_element["trip_type"] = type
-    # trip_element.set("type", "passenger")
     trip_element["type"] = "passenger"
-    # trip_element.set("color", "1,1,0")
     trip_element["color"] = "1,1,0"
     trip_element["from_taz"] = trip["from_taz"]
     trip_element["to_taz"] = trip["to_taz"]
 
     trip_element["stat"] = ''
 
-    # if polygon.contains(point_from) or polygon.contains(point_to):
     if trip["from_taz"] != '' or trip["to_taz"] != '':
-        # print("This trip has at least one end in the ROI.")
         trip_element["flag"] = True
 
         #### trip going out polygon:
         # if it is a drop off trip, then parking at to_edge_id for 20s, after that travel back to from node
         # if it is a on or off parking, do not assign parking as it is going to park somewhere outside the network
         ####
-        # if polygon.contains(point_from) and not polygon.contains(point_to): # trip going out polygon
         if trip["from_taz"] != '' and trip["to_taz"] == '':
-            # from_edge = getClosestEdge(float(trip["from_x"]) + offset[0], float(trip["from_y"]) + offset[1], net,
-            #                            radius)
             from_edge_id = random.choice(TAZ_edge_dict[trip["from_taz"]])
-            # if from_edge is not None:
-            #     from_edge_id = from_edge.getID()
             to_edge_id = ODs["destinations"][weighted_choice(ODs["destination_weights"])]
             if from_edge_id in ODs["destinations"]:
                 trip_element["flag"] = False
-                # trip_element.set("from", "")
                 trip_element["from"] = ""
             else:
                 trip_element["from"] = from_edge_id
                 if type is 'drop-off' and trip["to_type"] != 'home':
-                    # etree.SubElement(trip_element, "stop")
                     parkedEdge = getParkedEdge(to_edge_id, parkingAreas, None)
-                    # trip_element.stop.set("parkingArea", parkingAreas[parkedEdge])
-                    # trip_element.stop.set("duration", str(duration))
                     trip_element["stop"] = {"parkingArea": parkingAreas[parkedEdge],
                                             "duration": str(duration)}
                 trip_element["stat"] = 'out'
             # need to make sure there is a path going back to from node
             if type is 'drop-off' and trip["to_type"] != 'home':
-                # trip_element.set("to", from_edge_id)
                 trip_element["to"] = from_edge_id
             else:
-                # trip_element.set("to", to_edge_id)
                 trip_element["to"] = to_edge_id
-            # trip_element.set("direction", "out")
             trip_element["direction"] = "out"
         #### trip going into polygon:
         #
@@ -399,8 +381,6 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
                 trip_element["stat"] = 'within'
     else:
         trip_element["flag"] = False
-    # Set departure time (in second) for this trip
-    # trip_element.set("depart", str(trip["from_end_time"]))
     trip_element["depart"] = trip["from_end_time"]
     trip_element["end"] = trip["to_end_time"]
     if int(trip["trip_id"])%1000 == 0:
@@ -697,7 +677,15 @@ if __name__ == "__main__":
 
         net = sumolib.net.readNet('../cities/' + city + '/' + city + '.net.xml')
         edges = net.getEdges()
-        generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, edges)
+        on_edges = set(parkingAreas_on.keys())
+        off_egdes = set(parkingAreas_off.keys())
+        drop_off_edges = set(parkingAreas_drop_off.keys())
+        edges_with_parking_id = list((on_edges.union(off_egdes)).union(drop_off_edges))
+        edges_with_parking = []
+        for id in edges_with_parking_id:
+            edges_with_parking.append(net.getEdge(id))
+
+        generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, edges_with_parking)
 
         TAZ_on_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_on, net, xform_reverse)
         TAZ_drop_off_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_drop_off, net, xform_reverse)

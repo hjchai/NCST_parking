@@ -42,7 +42,7 @@
 
   <destination id="27570802#1"    weight="1"> </destination>
   <destination id="27570786#2"    weight="1"> </destination>
-  <destination id="254297762#2"   weight="2"> </destination>
+  <destination id="254297762#1"   weight="2"> </destination>
   <destination id="204967525"     weight="2"> </destination>
   <destination id="-8916767#0"    weight="1"> </destination>
   <destination id="48211062#12"   weight="1"> </destination>
@@ -74,7 +74,7 @@
   <destination id="-8916792"      weight="2"> </destination>
   <destination id="30454437"      weight="2"> </destination>
   <destination id="8918874"       weight="1"> </destination>
-  <destination id="52432936#1"    weight="2"> </destination>
+  <destination id="52432936#0"    weight="2"> </destination>
   <destination id="133755930#1"   weight="2"> </destination>
   <destination id="50690291#1"    weight="10"> </destination>
 

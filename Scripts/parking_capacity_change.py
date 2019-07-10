@@ -16,4 +16,5 @@ def park_cap_change(path, xmlfile, perc=0.1):
 
 
 path = '/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_2/'
+park_cap_change(path,'drop_off_parking.add.xml')
 park_cap_change(path,'off_parking.add.xml')
