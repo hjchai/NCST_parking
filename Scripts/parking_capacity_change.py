@@ -2,7 +2,7 @@ import numpy as np
 from lxml import etree, objectify
 
 
-def park_cap_change(path, xmlfile, perc=0.1):
+def park_cap_change(path, xmlfile, perc=0.2):
     additional = etree.parse(path + xmlfile).getroot()
     for parkingarea in additional.getchildren():
         print(parkingarea.attrib['roadsideCapacity'])
@@ -15,6 +15,6 @@ def park_cap_change(path, xmlfile, perc=0.1):
         f_obj.write(parkingAreas_on_xml)
 
 
-path = '/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_2/'
+path = '/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_2/parking/'
 park_cap_change(path,'drop_off_parking.add.xml')
 park_cap_change(path,'off_parking.add.xml')

@@ -290,7 +290,7 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
     trip_element = {}
     trip_element["id"] = trip["trip_id"]
     trip_element["trip_type"] = type
-    trip_element["type"] = "passenger"
+    trip_element["type"] = type
     trip_element["color"] = "1,1,0"
     trip_element["from_taz"] = trip["from_taz"]
     trip_element["to_taz"] = trip["to_taz"]
@@ -305,20 +305,24 @@ def func(trip, on_closest, off_closest, drop_off_closest, net, offset, ODs,
         # if it is a on or off parking, do not assign parking as it is going to park somewhere outside the network
         ####
         if trip["from_taz"] != '' and trip["to_taz"] == '':
-            from_edge_id = random.choice(TAZ_edge_dict[trip["from_taz"]])
-            to_edge_id = ODs["destinations"][weighted_choice(ODs["destination_weights"])]
+            if type == 'drop-off' and trip["from_type"] != 'home': # this type of trip is going from work to home need pickup
+                from_edge_id = ODs["origins"][weighted_choice(ODs["origin_weights"])]
+                to_edge_id = random.choice(TAZ_edge_dict[trip["from_taz"]]) # from company to home
+            else:
+                from_edge_id = random.choice(TAZ_edge_dict[trip["from_taz"]])
+                to_edge_id = ODs["destinations"][weighted_choice(ODs["destination_weights"])]
             if from_edge_id in ODs["destinations"]:
                 trip_element["flag"] = False
                 trip_element["from"] = ""
             else:
                 trip_element["from"] = from_edge_id
-                if type is 'drop-off' and trip["to_type"] != 'home':
+                if type is 'drop-off' and trip["from_type"] != 'home':
                     parkedEdge = getParkedEdge(to_edge_id, parkingAreas, None)
                     trip_element["stop"] = {"parkingArea": parkingAreas[parkedEdge],
                                             "duration": str(duration)}
                 trip_element["stat"] = 'out'
             # need to make sure there is a path going back to from node
-            if type is 'drop-off' and trip["to_type"] != 'home':
+            if type is 'drop-off' and trip["from_type"] != 'home':
                 trip_element["to"] = from_edge_id
             else:
                 trip_element["to"] = to_edge_id
@@ -485,7 +489,7 @@ def createTripXML(city, trips_sorted, parkingAreas_on, parkingAreas_off, parking
                              encoding="utf-8")
 
     try:
-        with open(scenario_dir + '/trip_' + dataset + '_with_' + str(drop_off_percentage) + '_drop-off_'
+        with open(scenario_dir + '/trips/trip_' + dataset + '_with_' + str(drop_off_percentage) + '_drop-off_'
                   + '{:.1f}'.format(drop_off_only_percentage) + '_drop-off_only.xml', "wb") as xml_writer:
             xml_writer.write(obj_xml)
         xml_writer.close()
@@ -549,18 +553,20 @@ def randomizeOriginDestination(trips_sorted, features, xform, xform_reverse):
 
     return trips_sorted_randomized
 
-def generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, edges):
+def generateParkingRerouter(scenario_dir, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, edges):
     edges_str = ''
     for edge in edges:
         edges_str = edges_str + edge.getID() + ' '
     edges_str = edges_str[:-1]
 
-    with open("../cities/" + city + "/reroute_parking.xml", "w") as xml_writer:
+    with open(scenario_dir + "/rerouter/reroute_parking_" + str(drop_off_only_percentage) + "_drop-off_only.xml", "w") as xml_writer:
         xml_writer.write('''<?xml version="1.0" encoding="UTF-8"?>\n''')
         xml_writer.write('''<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">\n''')
-        for parkingAreas, rerouter_id in zip([parkingAreas_on, parkingAreas_off, parkingAreas_drop_off], ['rerouter_on', 'rerouter_off', 'rerouter_drop_off']):
+        for parkingAreas, type in zip([parkingAreas_on, parkingAreas_off, parkingAreas_drop_off], ['on', 'off', 'drop_off']):
+            rerouter_id = 'rerouter_' + type
             rerouter = objectify.Element("rerouter")
             rerouter.set("id", rerouter_id)
+            rerouter.set("vType", type)
             rerouter.set("edges", edges_str)
 
             interval = objectify.Element("interval")
@@ -594,7 +600,7 @@ if __name__ == "__main__":
     dataset = '0.01'
     scenario_dir = "../cities/" + city + "/Scenario_Set_2"
     drop_off_only_percentages = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] # percentage of on-street parking dedicated to drop-off only
-    drop_off_percentages = [0.5] #[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] # percentage of drop-off trips
+    drop_off_percentages = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] # percentage of drop-off trips
     capacity_increase = 0.25 # capacity increase of remaining off-street parking structures
 
     traci.start(["sumo", "-c", "../cities/" + city + "/dummy.sumo.cfg"]) #initialize connect to traci using a dummy sumo cfg file
@@ -635,38 +641,38 @@ if __name__ == "__main__":
     if not os.path.exists(scenario_dir):
         os.makedirs(scenario_dir)
         os.makedirs(scenario_dir + '/results')
-        os.makedirs(scenario_dir + 'plots')
-    copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/drop_off_parking.add.xml")
+        os.makedirs(scenario_dir + '/plots')
+    copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/parking/drop_off_parking.add.xml")
     parkingAreas_drop_off = pk.parseParking(
-        scenario_dir + "/drop_off_parking.add.xml")  # parking spots that are used for drop-off traffic
+        scenario_dir + "/parking/drop_off_parking.add.xml")  # parking spots that are used for drop-off traffic
 
     for drop_off_only_percentage in drop_off_only_percentages:
         if scenario_dir[-1] == '1':
             # on-street
-            copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/on_parking.add.xml")
+            copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/parking/on_parking.add.xml")
             parkingAreas_on = pk.parseParking(
-                scenario_dir + "/on_parking.add.xml")  # parking spots that are used for both drop-off traffic and on-street parking traffic
+                scenario_dir + "/parking/on_parking.add.xml")  # parking spots that are used for both drop-off traffic and on-street parking traffic
             # off-street
-            copyfile("../cities/" + city + "/off_parking.add.xml", scenario_dir + "/off_parking.add.xml")
+            copyfile("../cities/" + city + "/off_parking.add.xml", scenario_dir + "/parking/off_parking.add.xml")
             parkingAreas_off = pk.parseParking(
-                scenario_dir + '/off_parking.add.xml')  # parking spots that are used for off street parking
+                scenario_dir + '/parking/off_parking.add.xml')  # parking spots that are used for off street parking
         elif scenario_dir[-1] == '2':
             # on-street
             parkingAreas_on_OBJ = pk.splitDropoffAndOnParking("../cities/" + city + "/on_parking.add.xml", drop_off_only_percentage)
-            with open(scenario_dir + "/on_parking_" + '{:.1f}'.format(1 - drop_off_only_percentage) + ".add.xml", "w") as f_obj:
+            with open(scenario_dir + "/parking/on_parking_" + '{:.1f}'.format(1 - drop_off_only_percentage) + ".add.xml", "w") as f_obj:
                 parkingAreas_on_xml = etree.tostring(parkingAreas_on_OBJ, pretty_print=True, xml_declaration=False, encoding="utf-8").decode("utf-8")
                 f_obj.write(parkingAreas_on_xml)
             parkingAreas_on = pk.parseParking(
-                scenario_dir + "/on_parking_" + '{:.1f}'.format(1 - drop_off_only_percentage) + ".add.xml") # parking spots that are used for both drop-off traffic and on-street parking traffic
+                scenario_dir + "/parking/on_parking_" + '{:.1f}'.format(1 - drop_off_only_percentage) + ".add.xml") # parking spots that are used for both drop-off traffic and on-street parking traffic
             # off-street
-            copyfile("../cities/" + city + "/off_parking.add.xml", scenario_dir + "/off_parking.add.xml")
+            copyfile("../cities/" + city + "/off_parking.add.xml", scenario_dir + "/parking/off_parking.add.xml")
             parkingAreas_off = pk.parseParking(
-                scenario_dir + '/off_parking.add.xml')  # parking spots that are used for off street parking
+                scenario_dir + '/parking/off_parking.add.xml')  # parking spots that are used for off street parking
         elif scenario_dir[-1] == '3':
             # on-street
-            copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/on_parking.add.xml")
+            copyfile("../cities/" + city + "/on_parking.add.xml", scenario_dir + "/parking/on_parking.add.xml")
             parkingAreas_on = pk.parseParking(
-                scenario_dir + "/on_parking.add.xml")  # parking spots that are used for both drop-off traffic and on-street parking traffic
+                scenario_dir + "/parking/on_parking.add.xml")  # parking spots that are used for both drop-off traffic and on-street parking traffic
             # off-street
             # todo: scenario 3
             parkingAreas_off = pk.parseParking('../cities/' + city + '/off_parking.add.xml') # parking spots that are used for off street parking
@@ -685,7 +691,7 @@ if __name__ == "__main__":
         for id in edges_with_parking_id:
             edges_with_parking.append(net.getEdge(id))
 
-        generateParkingRerouter(city, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, edges_with_parking)
+        generateParkingRerouter(scenario_dir, parkingAreas_on, parkingAreas_off, parkingAreas_drop_off, edges_with_parking)
 
         TAZ_on_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_on, net, xform_reverse)
         TAZ_drop_off_parking_dict = pk.parkingToTAZs(features_geometry, parkingAreas_drop_off, net, xform_reverse)

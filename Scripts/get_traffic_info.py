@@ -4,6 +4,9 @@ import numpy as np
 from math import ceil
 import matplotlib.pyplot as plt
 
+drop_off_only_percentages = ['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9']
+drop_off_percentages = ['0.3']#['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
+
 def getVMT(xmlfile):
     vmt = 0
     routes = etree.parse(xmlfile).getroot()
@@ -16,8 +19,9 @@ def getVMT(xmlfile):
 def plotVMT():
     vmts, ave_vmts = [], []
     for drop_off_percentage in drop_off_percentages:
-        vmts.append(getVMT("../cities/san_francisco/Scenario_Set_1/results/vehroute_0.01_with_" + drop_off_percentage + "_drop-off.xml")[0])
-        ave_vmts.append(getVMT("../cities/san_francisco/Scenario_Set_1/results/vehroute_0.01_with_" + drop_off_percentage + "_drop-off.xml")[1])
+        for drop_off_only_percentage in drop_off_only_percentages:
+            vmts.append(getVMT("../cities/san_francisco/Scenario_Set_2/results/0.3_drop-off/vehroute_0.01_with_" + drop_off_percentage + "_drop-off_" + drop_off_only_percentage + "_drop-off_only.xml")[0])
+            ave_vmts.append(getVMT("../cities/san_francisco/Scenario_Set_2/results/0.3_drop-off/vehroute_0.01_with_" + drop_off_percentage + "_drop-off_" + drop_off_only_percentage + "_drop-off_only.xml")[1])
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
 
@@ -160,10 +164,7 @@ def plotEmission():
     # plt.show()
     return COs, CO2s, NOxs, PMxs, HCs, fuels
 
-drop_off_only_percentages = ['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9']
-drop_off_percentages = ['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
-
-# plotVMT()
+plotVMT()
 # plotQueue()
 # plotTraveltime()
 # emissions = plotEmission()
@@ -217,5 +218,5 @@ def OD_count(xmlfile, ODs=45):
     print(sum)
     return from_tazs, to_tazs
 
-origin, destination = OD_count('../cities/san_francisco/Scenario_Set_1/trip_0.01_with_' + '1.0' + '_drop-off.xml')
+# origin, destination = OD_count('../cities/san_francisco/Scenario_Set_1/trip_0.01_with_' + '1.0' + '_drop-off.xml')
 print(origin, origin.sum(),destination,destination.sum())

@@ -2,9 +2,17 @@
 <routes>
 
   <!-- Krauss Model -->
-  <vType id="passenger" length="5.0" minGap="2.0" maxSpeed="30.0">
+  <vType id="on" length="5.0" minGap="2.0" maxSpeed="30.0">
       <carFollowing-Krauss accel="3.0" decel="5.0" sigma="0" tau="1.64" />
-  </vType>  
+  </vType>
+
+    <vType id="off" length="5.0" minGap="2.0" maxSpeed="30.0">
+      <carFollowing-Krauss accel="3.0" decel="5.0" sigma="0" tau="1.64" />
+  </vType>
+
+    <vType id="drop-off" length="5.0" minGap="2.0" maxSpeed="30.0">
+      <carFollowing-Krauss accel="3.0" decel="5.0" sigma="0" tau="1.64" />
+  </vType>
 
 
 </routes>
