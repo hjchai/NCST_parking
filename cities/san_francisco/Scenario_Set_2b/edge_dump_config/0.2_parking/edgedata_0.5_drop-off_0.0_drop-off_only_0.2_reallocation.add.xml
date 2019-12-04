@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <edgeData id="1" file="../../results/0.2_parking/edgedata_traffic_0.5_drop-off_0.2_reallocation.xml"/>
+    <edgeData id="2" type="emissions" file="../../results/0.2_parking/edgedata_emission_0.5_drop-off_0.2_reallocation.xml"/>
+    <edgeData id="3" type="harmonoise" file="../../results/0.2_parking/edgedata_noise_0.5_drop-off_0.2_reallocation.xml"/>
+</additional>

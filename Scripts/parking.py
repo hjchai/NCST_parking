@@ -3,6 +3,10 @@ from qgis.core import *
 import sys
 import numpy as np
 import os
+import random, math
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 def parseParking(xmlfile):
     parkingAreas = {}
@@ -48,6 +52,50 @@ def splitDropoffAndOnParking(total_parking_xml, drop_off_only_percentage):
     for parking in root.getchildren():
         if np.random.random() < 1 - drop_off_only_percentage:
             additional.append(parking)
+    return additional
+
+def reallocateOffParkingCapacity(base_off_parking, reallocate_percentage):
+    if reallocate_percentage == 0:
+        return etree.parse(base_off_parking).getroot()
+
+    parkingAreas_dict, total_capacity = loadParkingFacility(base_off_parking)
+    parkingAreas_obj = parseParking(base_off_parking)
+    reallocate_capacity = int(total_capacity * reallocate_percentage)
+    reallocate_amount = 0
+    original_count = len(parkingAreas_dict)
+    removed_count = 0
+    while True:
+        rand_element = random.choice(list(parkingAreas_dict.keys()))
+        rand_capacity = parkingAreas_dict[rand_element]['capacity']
+        if reallocate_amount + rand_capacity < 0.95 * reallocate_capacity:
+            reallocate_amount += rand_capacity
+            del parkingAreas_dict[rand_element]
+            removed_count += 1
+        elif reallocate_amount + rand_capacity > 1.05 * reallocate_capacity:
+            continue
+        else:
+            reallocate_amount += rand_capacity
+            del parkingAreas_dict[rand_element]
+            removed_count += 1
+            break
+    remain_capacity = total_capacity - reallocate_amount
+    additional = objectify.Element("additional")
+
+    logging.debug('Original capacity is: ({}, {})'.format(original_count, total_capacity))
+    logging.debug('Reallocated capacity is: ({}, {})'.format(removed_count, reallocate_amount))
+    logging.debug('Left capacity is: ({}, {})'.format(len(parkingAreas_dict), remain_capacity))
+
+    total_capacity_new = 0
+    for key in parkingAreas_dict.keys():
+        edge = key.split('_')[1]
+        original_capacity = int(parkingAreas_obj[edge].attrib['roadsideCapacity'])
+        expanded_capacity = int(original_capacity/remain_capacity * reallocate_amount) + original_capacity
+        parkingAreas_obj[edge].attrib['roadsideCapacity'] = str(expanded_capacity)
+        additional.append(parkingAreas_obj[edge])
+        total_capacity_new += expanded_capacity
+
+    logging.debug('After reallocation, total capacity is: ({}, {})'.format(len(parkingAreas_dict), total_capacity_new))
+
     return additional
 
 

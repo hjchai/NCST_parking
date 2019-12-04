@@ -15,6 +15,10 @@ def park_cap_change(path, xmlfile, perc=0.2):
         f_obj.write(parkingAreas_on_xml)
 
 
-path = '/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_2/parking/'
-park_cap_change(path,'drop_off_parking.add.xml')
-park_cap_change(path,'off_parking.add.xml')
+path = '../cities/san_francisco/Scenario_Set_2b/parking/'
+park_cap_change(path, 'drop_off_parking.add.xml')
+
+# park_cap_change(path, 'off_parking.add.xml')
+reallocate_percenatges = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+for reallocate_percenatge in reallocate_percenatges:
+    park_cap_change(path, 'off_parking_' + str(reallocate_percenatge) + '_reallocation.add.xml')

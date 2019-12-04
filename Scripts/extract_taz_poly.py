@@ -5,7 +5,7 @@ print(sys.path)
 from qgis.core import * # python-qgis only works with python3.6.
 import numpy as np
 
-city = 'san_francisco'
+city = 'sf_residential'
 file = open('../cities/' + city + '/' + city + '.poly.xml', 'w')
 file.write('''<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo-sim.org/xsd/additional_file.xsd">\n''')
 file.write("\n")
