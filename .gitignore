@@ -2,5 +2,17 @@
 .idea/*
 Caroline_NCST_Data/
 venv/
+cities/*/*/results/
+cities/*/*/plots/
+cities/*/*/trips/
+TRB\ poster/
+cities/fairfield/Scenario_Set_*
+cities/san_francisco/Scenario_Set_*/parking/
+cities/san_francisco/Scenario_Set_*/rerouter/
 #files
 *.pyc
+cities/*/san_francisco_plans_*
+cities/*/originaltrip.xml
+cities/fairfield/fairfield_plans_0.05.xml
+cities/fairfield/fairfield_plans_all_7.xml
+cities/fairfield/originaltrip_with_randomizedOD.xml
