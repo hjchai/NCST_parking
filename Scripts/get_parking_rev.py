@@ -85,18 +85,20 @@ def plot_bar(df, dropoff_count, path='Scenario_Set_1/plots/',drop_cost=0):
     plt.xticks(ind,['0','10','20','30','40','50','60','70','80','90','100'])
     plt.yticks(np.arange(0, ymax*1.1, 25000))
     if path == 'Scenario_Set_1/plots/':
-        plt.xlabel('Percentage of drop-off traffic (%)', fontsize=16)
+        plt.xlabel('Percentage of drop-off/pick-up traffic (%)', fontsize=16)
     else:
-        plt.xlabel('Percentage of curbside parking dedicated to drop-off traffic (%)', fontsize=16)
+        plt.xlabel('Percentage of curbside parking dedicated to drop-off/pick-up traffic (%)', fontsize=16)
     # plt.savefig("../cities/san_francisco/Scenario_Set_1/plots/rev_with_2dollar_drop_off.png")
     plt.savefig("../cities/san_francisco/"+path+"rev_with_"+str(drop_cost)+"dollar_drop_off.png")
     if path == 'Scenario_Set_1/plots/' and drop_cost == 0:
         plt.figure(figsize=(8, 6))
         plt.ylabel('Drop-off fee ($)', fontsize=16)
-        plt.xlabel('Percentage of drop-off traffic (%)', fontsize=16)
+        plt.xlabel('Percentage of drop-off/pick-up traffic (%)', fontsize=16)
         drop_off_fees = [0]
         base_rev = on[0] + off[0] + drop_off[0]
         for on_, off_, drop_off_, dropoff_count_ in zip(on, off, drop_off, dropoff_count):
+            if dropoff_count_ == 0:
+                continue
             drop_off_fees.append((base_rev - on_ - off_)/dropoff_count_)
         plt.bar(ind, drop_off_fees)
         plt.xticks(ind, ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '100'])
@@ -149,16 +151,19 @@ def hist_plot(list):
     ax.set_title('Drop-Off Occupancy')
     plt.savefig("../cities/san_francisco/Scenario_Set_1/plots/occupancy_vs_dropoff_percentage.png",bbox_inches='tight', dpi=1000)
     plt.show()
+
 def am_sum(list):
     sum = 0
     for i in np.arange(24,40,1):
         sum += list[i]
     return sum
+
 def pm_sum(list):
     sum = 0
     for i in np.arange(60,76,1):
         sum += list[i]
     return sum
+
 def s_hist_plot(list):
     occ = np.array(list)
     #print(occ.shape)
@@ -170,7 +175,7 @@ def s_hist_plot(list):
     ax = fig.add_subplot(111, projection='3d')
     ax.plot_surface(X,Y,Z1,cmap=cm.coolwarm)
     ax.set_xlabel('Time of day',fontsize=12)
-    ax.set_ylabel('Percentage of drop-off traffic  (%)',fontsize=12)
+    ax.set_ylabel('Percentage of drop-off/pick-up traffic  (%)',fontsize=12)
     ax.set_zlabel('Occupancy',fontsize=12)
     ax.set_title('On street Occupancy',fontsize=12)
     plt.savefig("../cities/san_francisco/Scenario_Set_2/plots/on_occupancy_vs_dropoff_percentage.png", bbox_inches='tight',
@@ -180,7 +185,7 @@ def s_hist_plot(list):
     ax = fig.add_subplot(111)
     ax.plot(np.arange(0,110,10),[am_sum(Z1[i])/16 for i in range(11)],label='AM Peak: 06:00-10:00')
     ax.plot(np.arange(0,110,10),[pm_sum(Z1[i])/16 for i in range(11)],label='PM Peak: 15:00-19:00')
-    ax.set_xlabel('Percentage of drop-off traffic  (%)',fontsize=12)
+    ax.set_xlabel('Percentage of drop-off/pick-up traffic  (%)',fontsize=12)
     ax.set_ylabel('Occupancy',fontsize=12)
     plt.legend(prop = {'size':12})
     plt.savefig("../cities/san_francisco/Scenario_Set_2/plots/on_occupancy_peak_vs_dropoff_percentage.png", bbox_inches='tight',
@@ -191,7 +196,7 @@ def s_hist_plot(list):
     ax = fig.add_subplot(111, projection='3d')
     ax.plot_surface(X, Y, Z2, cmap=cm.coolwarm)
     ax.set_xlabel('Time of day',fontsize=12)
-    ax.set_ylabel('Percentage of drop-off traffic  (%)',fontsize=12)
+    ax.set_ylabel('Percentage of drop-off/pick-up traffic  (%)',fontsize=12)
     ax.set_zlabel('Occupancy',fontsize=12)
     ax.set_title('Off street Occupancy',fontsize=12)
     plt.savefig("../cities/san_francisco/Scenario_Set_2/plots/off_occupancy_vs_dropoff_percentage.png", bbox_inches='tight',
@@ -201,7 +206,7 @@ def s_hist_plot(list):
     ax = fig.add_subplot(111)
     ax.plot(np.arange(0, 110, 10), [am_sum(Z2[i]) / 16 for i in range(11)], label='AM Peak: 06:00-10:00')
     ax.plot(np.arange(0, 110, 10), [pm_sum(Z2[i]) / 16 for i in range(11)], label='PM Peak: 15:00-19:00')
-    ax.set_xlabel('Percentage of drop-off traffic  (%)',fontsize=12)
+    ax.set_xlabel('Percentage of drop-off/pick-up traffic  (%)',fontsize=12)
     ax.set_ylabel('Occupancy',fontsize=12)
     plt.legend(prop={'size':12})
     plt.savefig("../cities/san_francisco/Scenario_Set_2/plots/off_occupancy_peak_vs_dropoff_percentage.png", bbox_inches='tight',
@@ -212,7 +217,7 @@ def s_hist_plot(list):
     ax = fig.add_subplot(111, projection='3d')
     ax.plot_surface(X, Y, Z3, cmap=cm.coolwarm)
     ax.set_xlabel('Time of day',fontsize=12)
-    ax.set_ylabel('Percentage of drop-off traffic  (%)',fontsize=12)
+    ax.set_ylabel('Percentage of drop-off/pick-up traffic  (%)',fontsize=12)
     ax.set_zlabel('Occupancy',fontsize=12)
     ax.set_title('Drop-Off Occupancy',fontsize=12)
     plt.savefig("../cities/san_francisco/Scenario_Set_2/plots/drop_off_occupancy_vs_dropoff_percentage.png", bbox_inches='tight',
@@ -222,14 +227,12 @@ def s_hist_plot(list):
     ax = fig.add_subplot(111)
     ax.plot(np.arange(0, 110, 10), [am_sum(Z3[i]) / 16 for i in range(11)], label='AM Peak: 06:00-10:00')
     ax.plot(np.arange(0, 110, 10), [pm_sum(Z3[i]) / 16 for i in range(11)], label='PM Peak: 15:00-19:00')
-    ax.set_xlabel('Percentage of drop-off traffic  (%)',fontsize=12)
+    ax.set_xlabel('Percentage of drop-off/pick-up traffic  (%)',fontsize=12)
     ax.set_ylabel('Occupancy',fontsize=12)
     plt.legend(prop={'size':12})
     plt.savefig("../cities/san_francisco/Scenario_Set_2/plots/drop_off_occupancy_peak_vs_dropoff_percentage.png", bbox_inches='tight',
                 dpi=1000)
     plt.show()
-
-
 
 
 tot = pd.DataFrame(columns=['on','off','drop-off']) # create a　dataframe to store all the total cost
@@ -238,17 +241,17 @@ occupacy = []
 list = ['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
 drop_cost = 0
 for l in list:
-    df_id,df_type,df_end,df_durations = Parkingtime('/home/huajun/Desktop/NCST_parking/cities/san_francisco/Scenario_Set_1/trips/trip_0.01_with_' + l + '_drop-off_0.0_drop-off_only.xml')
+    df_id,df_type,df_end,df_durations = Parkingtime('../cities/san_francisco/Scenario_Set_1/trips/trip_0.01_with_' + l + '_drop-off_0.0_drop-off_only.xml')
     out = pd.concat([df_id,df_type,df_end,df_durations],axis=1)
     out.columns = ['id','type','end','duration']
     ## calculate cost
-    out_cost = parking_cost(out,drop_cost=drop_cost)
+    out_cost = parking_cost(out, drop_cost=drop_cost)
 
     on,off,drop = total_cost(out_cost)
-    newrow = {'on':on,'off':off,'drop-off':drop}
-    tot = tot.append(newrow,ignore_index=True)
+    newrow = {'on':on, 'off':off, 'drop-off':drop}
+    tot = tot.append(newrow, ignore_index=True)
 
-    dropoff_count.append(sum(df_type.iloc[:,0].values == 'drop-off'))
+    dropoff_count.append(sum(df_type.iloc[:, 0].values == 'drop-off'))
 
     ## calculate occupancy
     #occupacy.append(hist(out))  #11 * (96 * 3)

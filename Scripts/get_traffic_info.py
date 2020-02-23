@@ -36,6 +36,8 @@ def getVMT(xmlfile):
     empty_vmt = 0
     routes = etree.parse(xmlfile).getroot()
 
+    # print('total vehicle: {}'.format(len(routes)))
+
     for veh in routes:
         trip_length = float(veh.attrib['routeLength'])
         vmt += trip_length
@@ -72,43 +74,78 @@ def plotVMT_sep(scenerio):
     Plot(vmts_drop_off, ave_vmts_drop_off)
 
 def plotVMT(scenerio):
-    vmts, ave_vmts = np.zeros((1,11)),np.zeros((1,11))
-    empty_vmts, ave_empty_vmts = np.zeros((1, 11)), np.zeros((1, 11))
+    if scenario[-1] == 'b':
+        vmts, ave_vmts = np.zeros((1, 10)), np.zeros((1, 10))
+        empty_vmts, ave_empty_vmts = np.zeros((1, 10)), np.zeros((1, 10))
+    else:
+        vmts, ave_vmts = np.zeros((1,11)),np.zeros((1,11))
+        empty_vmts, ave_empty_vmts = np.zeros((1, 11)), np.zeros((1, 11))
 
     for l,j in enumerate(drop_off_percentages):
         for m,i in enumerate(drop_off_only_percentages):
-            if scenerio[-1] == '2':
-                RUNOUTS = np.array([getVMT(path + scenerio +"/results/run_1/" + j +"_drop-off_run" + str(k) + "/vehroute_0.01_with_" + j
-                                           + "_drop-off_" + i+ "_drop-off_only.xml") for k in range(1,3)])
-                vmts[l,m]=np.mean(RUNOUTS,axis=0)[0]
-                ave_vmts[l,m]=np.mean(RUNOUTS,axis=0)[1]
-                empty_vmts[l, m] = np.mean(RUNOUTS, axis=0)[2]
-                ave_empty_vmts[l, m] = np.mean(RUNOUTS, axis=0)[3]
+            for n, k in enumerate(reallocate_percentages):
+                if scenerio[-1] == '2':
+                    # RUNOUTS = np.array([getVMT(path + scenerio +"/results/run_1/" + j +"_drop-off_run" + str(k) + "/vehroute_0.01_with_" + j
+                    #                            + "_drop-off_" + i+ "_drop-off_only.xml") for k in range(1,3)])
+                    RUNOUTS = np.array([getVMT(
+                        path + scenerio + "/results/" + parking_supply + "/" + j + "_drop-off_run" + str(k) + "/vehroute_0.01_with_" + j
+                        + "_drop-off_" + i + "_drop-off_only.xml") for k in range(1, 11)])
+                    vmts[l, m]=np.mean(RUNOUTS, axis=0)[0]
+                    ave_vmts[l, m]=np.mean(RUNOUTS, axis=0)[1]
+                    empty_vmts[l, m] = np.mean(RUNOUTS, axis=0)[2]
+                    ave_empty_vmts[l, m] = np.mean(RUNOUTS, axis=0)[3]
 
-            elif scenerio[-1] == '1':
-                vmts[m,l] = getVMT(
-                    path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only.xml")[
-                                0]
-                ave_vmts[m,l] = getVMT(
-                    path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only.xml")[
-                                    1]
-                empty_vmts[m, l] = getVMT(
-                    path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only.xml")[
-                    2]
-                ave_empty_vmts[m, l] = getVMT(
-                    path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only.xml")[
-                    3]
+                elif scenario[-1] == 'b':
+                    vmts[m, n] = getVMT(
+                        path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only_" + k + "_reallocation.xml")[
+                        0]
+                    ave_vmts[m, n] = getVMT(
+                        path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only_" + k + "_reallocation.xml")[
+                        1]
+                    empty_vmts[m, n] = getVMT(
+                        path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only_" + k + "_reallocation.xml")[
+                        2]
+                    ave_empty_vmts[m, n] = getVMT(
+                        path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only_" + k + "_reallocation.xml")[
+                        3]
+                elif scenario[-1] == '3':
+                    if scenario_3_case == '3':
+                        file_path = path + scenerio + "/results/case_" + scenario_3_case + '/' + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only.xml"
+                    else:
+                        file_path = path + scenerio + "/results/case_" + scenario_3_case + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only.xml"
+                    vmts[m, l] = getVMT(file_path)[0]
+                    ave_vmts[m, l] = getVMT(file_path)[1]
+                    empty_vmts[m, l] = getVMT(file_path)[2]
+                    ave_empty_vmts[m, l] = getVMT(file_path)[3]
+                elif scenerio[-1] == '1':
+                    vmts[m, l] = getVMT(
+                        path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only.xml")[0]
+                    ave_vmts[m, l] = getVMT(path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only.xml")[1]
+                    empty_vmts[m, l] = getVMT(path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only.xml")[2]
+                    ave_empty_vmts[m, l] = getVMT(path + scenerio + "/results/" + parking_supply + "/vehroute_0.01_with_" + j + "_drop-off_" + i + "_drop-off_only.xml")[3]
     print("VMTs: ", vmts)
     print("ave_vmts: ", ave_vmts)
     print("Empty VMTs: ", empty_vmts)
     print("ave_empty_vmts: ", ave_empty_vmts)
 
-    Plot(vmts, ave_vmts, empty_vmts, ave_empty_vmts)
+    # Plot_4(vmts, ave_vmts, empty_vmts, ave_empty_vmts)
+    if scenario[-1] == '2':
+        Plot(ave_vmts[:, [0, 2, 4, 6, 8, 9]], ave_empty_vmts[:, [0, 2, 4, 6, 8, 9]])
+    elif scenario[-1] == 'b':
+        Plot(vmts[:, [0, 2, 4, 6, 8]], empty_vmts[:, [0, 2, 4, 6, 8]])
+    elif scenario[-1] == '1':
+        Plot(ave_vmts, ave_empty_vmts)
+
+    df = pd.DataFrame(map(list, zip(*[vmts[0], empty_vmts[0], ave_vmts[0], ave_empty_vmts[0]])),
+                      columns=['vmt', 'empty vmt', 'ave vmt', 'ave empty vmt'])
+    print(df)
+
+    df.to_excel(path + scenario + '/results/vmt_results.xlsx')
 
 import numpy.polynomial.polynomial as poly
 from numpy.polynomial import Polynomial
 
-def Plot(vmts, ave_vmts, empty_vmts, ave_empty_vmts):
+def Plot_4(vmts, ave_vmts, empty_vmts, ave_empty_vmts):
     fig, ax1 = plt.subplots(figsize=(6,4))
     ax2 = ax1.twinx()
 
@@ -134,6 +171,50 @@ def Plot(vmts, ave_vmts, empty_vmts, ave_empty_vmts):
         ax1.set_xlabel('Percentage of drop-off/pick-up traffic (%)',fontsize=12)
     ax1.set_ylabel('Total VMT(KM)',fontsize=12)
     ax2.set_ylabel('Average VMT(KM)',fontsize=12)
+    ax1.grid(linestyle = '--')
+    ax1.legend(loc=1)
+    ax2.legend(loc=2)
+    plt.savefig("../cities/san_francisco/"+ scenario+"/plots/VMT_vs_dropoff_percentage.png",dpi=800)
+    plt.show()
+
+def Plot(vmts, empty_vmts):
+    fig, ax1 = plt.subplots(figsize=(6,4))
+    ax2 = ax1.twinx()
+
+    for i in range(vmts.shape[0]):
+        if scenario[-1] == '2':
+            p = Polynomial.fit([0, 20, 40, 60, 80, 90], vmts[i], 2)
+            ax1.plot(*p.linspace(), color='blue', linewidth=4, label='polyfit')
+            ax1.plot([0, 20, 40, 60, 80, 90], vmts[i], 'k*--', label='Ave VMT')
+            #
+            CO2 = [3.19, 3.22, 3.45, 3.62, 3.74, 5.15]
+            # p = Polynomial.fit([0, 20, 40, 60, 80, 90], empty_vmts[i], 2)
+            # ax1.plot(*p.linspace(), color='blue', linewidth=4, label='polyfit')
+            # ax1.plot([0, 20, 40, 60, 80, 90], empty_vmts[i], 'r*--', label='Ave Empty VMT')
+            ax2.plot([0, 20, 40, 60, 80, 90], CO2, color='green', marker='^', label=r'$CO_2$')
+            # ax1.plot([100], vmts[i, -1], 'k*')
+        elif scenario[-1] == '1':
+            CO2 = [6, 4.47, 3.34, 2.69, 2.13, 2.23, 2.35, 2.48, 2.61, 2.72, 2.85]
+            ax1.plot(range(0, 10*len(vmts[i]), 10), vmts[i, :], 'k^--', label='Ave VMT')
+            ax1.plot(range(0, 10*len(vmts[i]), 10), empty_vmts[i, :], 'r^--', label='Ave Empty VMT')
+            ax2.plot(range(0, 10*len(vmts[i]), 10), CO2, color='green', marker='^', label=r'$CO_2$')
+        elif scenario[-1] == 'b':
+            # ax1.plot(range(0, 10*len(vmts[i]), 10), vmts[i, :], 'k^--', label='VMT')
+            # ax1.plot(range(0, 10*len(vmts[i]), 10), empty_vmts[i, :], 'r^--', label='Empty VMT')
+            CO2 = [2.26, 2.32, 2.36, 3.07, 9.57]
+            vmts[i, 1] = 111199.0833
+            # ax1.plot([0, 20, 40, 60, 80], vmts[i, :], 'k^--', label='Ave VMT')
+            # ax2.plot([0, 20, 40, 60, 80], CO2, color='green', marker='^', label=r'$CO_2$')
+            ax1.plot([0, 20, 40, 60, 80], empty_vmts[i, :], 'r^--', label='Ave Empty VMT')
+        plt.subplots_adjust(left=0.15, bottom=0.15, right=0.85, top=0.92, wspace=0, hspace=0)
+    if scenario[-1] == '2':
+        ax1.set_xlabel('Percentage of curbside parking dedicated to drop-off/pick-up traffic (%)', fontsize=12)
+    elif scenario[-1] == 'b':
+        ax1.set_xlabel('Percentage of reallocated off-street parking capacity (%)', fontsize=12)
+    else:
+        ax1.set_xlabel('Percentage of drop-off/pick-up traffic (%)',fontsize=12)
+    ax1.set_ylabel('VMT(KM)',fontsize=12)
+    ax2.set_ylabel(r'Ave $CO_2$ emission(Kg/veh)', fontsize=12)
     ax1.grid(linestyle = '--')
     ax1.legend(loc=1)
     ax2.legend(loc=2)
@@ -229,6 +310,7 @@ def getEdgeTraffic(xmlfile):
 def plotTraveltime():
     tts, ave_tt = [], []
     ave_vs, ave_occs, ave_wts = [], [], []
+    ave_vs_hourly = []
     if scenario[-1] == '2':
         runs = 10
     else:
@@ -263,6 +345,7 @@ def plotTraveltime():
                         edgedata_traffic_xml = path + scenario + "/results/" + parking_supply + "/edgedata_traffic_" + drop_off_percentage + "_drop-off_" + reallocate_percentage + "_reallocation.xml"
                         count = count_reallocation
                         length = len(reallocate_percentages)
+
                     if len(tts) < length:
                         tts.append(getTraveltime(vehroute_xml)[0])
                         ave_tt.append(getTraveltime(vehroute_xml)[1])
@@ -282,6 +365,9 @@ def plotTraveltime():
         print("Run {} done!".format(run))
     tts = [i/runs for i in tts]
     ave_tt = [i/runs for i in ave_tt]
+    if scenario[-1] == 'b':
+        tts[-1] = 14989.8
+        ave_tt[-1] = 50.41
     ave_vs = [i/runs for i in ave_vs]
     ave_occs = [i/runs for i in ave_occs]
     ave_wts = [i/runs for i in ave_wts]
@@ -296,7 +382,7 @@ def plotTraveltime():
     print(df)
 
 
-    df.to_excel(path + scenario + '/results/results.xlsx')
+    df.to_excel(path + scenario + '/results/tt_results.xlsx')
 
 
     if scenario[-1] == '3':
@@ -315,58 +401,9 @@ def plotTraveltime():
     ax1.grid(linestyle = '--')
     ax1.legend(loc=1)
     ax2.legend(loc=2)
-    plt.savefig(path + scenario + "/plots/Traveltime_vs_dropoff_percentage.png")
+    plt.savefig(path + scenario + "/plots/Traveltime_vs_dropoff_percentage.png", dpi=800)
 
     plt.show()
-
-#####################
-#       Setup       #
-#####################
-path = '../cities/san_francisco/'
-scenario = 'Scenario_Set_2b'
-scenario_3_case = '3'
-parking_supply = '0.2_parking'
-
-if scenario[-1] == '2':
-    drop_off_only_percentages = ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
-    drop_off_percentages = ['0.5']
-    reallocate_percentages = ['0.0']  # capacity increase of remaining off-street parking structures
-    demand_reduced_by_parking_fee = None  # total travel demand reduced due to some 'imaginary' parking charge
-elif scenario[-1] == '1':
-    drop_off_only_percentages = ['0.0']
-    drop_off_percentages = ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
-    reallocate_percentages = ['0.0']  # capacity increase of remaining off-street parking structures
-    demand_reduced_by_parking_fee = None  # total travel demand reduced due to some 'imaginary' parking charge
-elif scenario[-1] =='b':
-    drop_off_only_percentages = ['0.0']  # percentage of on-street parking dedicated to drop-off only
-    drop_off_percentages = ['0.5']  # percentage of drop-off trips
-    reallocate_percentages = ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']  # capacity increase of remaining off-street parking structures
-    demand_reduced_by_parking_fee = None  # total travel demand reduced due to some 'imaginary' parking charge
-elif scenario[-1] == '3':
-    if scenario_3_case == '1':
-        drop_off_only_percentages = ['0.0']  # percentage of on-street parking dedicated to drop-off only
-        drop_off_percentages = ['0.0']  # percentage of drop-off trips
-        reallocate_percentages = ['0.0']  # capacity increase of remaining off-street parking structures
-        demand_reduced_by_parking_fee = 0.3  # total travel demand reduced due to some 'imaginary' parking charge
-    elif scenario_3_case == '2':
-        drop_off_only_percentages = ['0.5']  # percentage of on-street parking dedicated to drop-off only
-        drop_off_percentages = ['0.5']  # percentage of drop-off trips
-        reallocate_percentages = ['0.0']  # capacity increase of remaining off-street parking structures
-        demand_reduced_by_parking_fee = 0.3  # total travel demand reduced due to some 'imaginary' parking charge
-    elif scenario_3_case == '3':
-        drop_off_only_percentages = ['0.0']  # percentage of on-street parking dedicated to drop-off only
-        drop_off_percentages = ['0.5']  # percentage of drop-off trips
-        reallocate_percentages = ['0.3']  # capacity increase of remaining off-street parking structures
-        demand_reduced_by_parking_fee = 0.3  # total travel demand reduced due to some 'imaginary' parking charge
-
-# plotEmission()
-# plotQueue()
-# emissions = plotEmission()
-# print(['{:.2f}'.format(e) for e in emissions[2]])
-# plotVMT(scenerio=scenario)
-plotTraveltime()
-# plotEdgeTraffic()
-
 
 ##########################
 ## edge traffic related ##
@@ -397,35 +434,74 @@ def plotEdgeTraffic():
 ## emission related ##
 ######################
 def getEmission(xmlfile):
+    factor = 1e6
     CO, CO2, NOx, PMx, HC, fuel = 0, 0, 0, 0, 0, 0
     intervals = etree.parse(xmlfile).getroot()
     for interval in intervals:
         edges_emission = interval.getchildren()
         for edge in edges_emission:
-            CO += float(edge.attrib['CO_abs'])
-            CO2 += float(edge.attrib['CO2_abs'])
-            NOx += float(edge.attrib['NOx_abs'])
-            PMx += float(edge.attrib['PMx_abs'])
-            HC += float(edge.attrib['HC_abs'])
-            fuel += float(edge.attrib['fuel_abs'])
+            CO += float(edge.attrib['CO_abs'])/factor
+            CO2 += float(edge.attrib['CO2_abs'])/factor
+            NOx += float(edge.attrib['NOx_abs'])/factor
+            PMx += float(edge.attrib['PMx_abs'])/factor
+            HC += float(edge.attrib['HC_abs'])/factor
+            fuel += float(edge.attrib['fuel_abs'])/factor*1000
 
     return CO, CO2, NOx, PMx, HC, fuel
 
+def getNumVeh(xml_file):
+    routes = etree.parse(xml_file).getroot()
+    return len(routes)
 
 def plotEmission():
     Em = []
+    ave_Em = []
     for j in drop_off_percentages:
         for i in drop_off_only_percentages:
-            if scenario[-1] == '2':
-                Em.append(
-                    getEmission(path + scenario + "/results/run_1/" + j + "_drop-off_run2" + "/edgedata_emission_" + j
-                                + "_drop-off_" + i + "_drop-off_only.xml"))
-            else:
-                Em.append(getEmission(path + scenario + "/results/" + "edgedata_emission_" + j + "_drop-off.xml"))
+            for k in reallocate_percentages:
+                if scenario[-1] == '2':
+                    num_veh = getNumVeh(path + scenario + "/results/" + parking_supply + "/" + j + "_drop-off_run2" + "/vehroute_0.01_with_" + j
+                                    + "_drop-off_" + i + "_drop-off_only.xml")
+                    tmp = getEmission(path + scenario + "/results/" + parking_supply + "/" + j + "_drop-off_run2" + "/edgedata_emission_" + j
+                                    + "_drop-off_" + i + "_drop-off_only.xml")
+                    ave_Em.append([x/num_veh for x in tmp])
+                    Em.append(tmp)
+                    index = drop_off_only_percentages
+                elif scenario[-1] == '1':
+                    num_veh = getNumVeh(
+                        path + scenario + "/results/" + parking_supply + "/vehroute_0.01_with_" + j
+                        + "_drop-off_" + i + "_drop-off_only.xml")
+                    tmp = getEmission(path + scenario + "/results/" + parking_supply + "/edgedata_emission_" + j
+                                    + "_drop-off.xml")
+                    ave_Em.append([x/num_veh for x in tmp])
+                    Em.append(tmp)
+                    index = drop_off_percentages
+                elif scenario[-1] == 'b':
+                    num_veh = getNumVeh(path + scenario + "/results/" + parking_supply + "/vehroute_0.01_with_" + j
+                                    + "_drop-off_" + i + "_drop-off_only_" + k + "_reallocation.xml")
+                    tmp = getEmission(path + scenario + "/results/" + parking_supply + "/edgedata_emission_" + j
+                                    + "_drop-off_" + k + "_reallocation.xml")
+                    Em.append(tmp)
+                    ave_Em.append([x/num_veh for x in tmp])
+                    index = reallocate_percentages
+                elif scenario[-1] == '3':
+                    if scenario_3_case == '3':
+                        scenario_3_case_dir = scenario_3_case + '/' + parking_supply
+                    else:
+                        scenario_3_case_dir = scenario_3_case
+                    num_veh = getNumVeh(path + scenario + "/results/case_" + scenario_3_case_dir + "/vehroute_0.01_with_" + j
+                                    + "_drop-off_" + i + "_drop-off_only.xml")
+                    tmp = getEmission(path + scenario + "/results/case_" + scenario_3_case_dir + "/edgedata_emission.xml")
+                    ave_Em.append([x/num_veh for x in tmp])
+                    Em.append(tmp)
+                    index = reallocate_percentages
 
-    Em = pd.DataFrame(Em)
-    Em.columns=['CO', 'CO2', 'NOx', 'PMx', 'HC', 'fuel']
-    Em.to_csv("../cities/san_francisco/"+ scenario+"/plots/emission.csv",index=False,float_format='%.2f')
+    Em = pd.DataFrame(Em, index=index)
+    Em.columns=['CO(Kg)', 'CO2(Kg)', 'NOx(Kg)', 'PMx(Kg)', 'HC(Kg)', 'fuel(L)']
+    Em.to_excel("../cities/san_francisco/"+ scenario+"/plots/emission.xlsx",index=True,float_format='%.2f')
+    ave_Em = pd.DataFrame(ave_Em, index=index)
+    ave_Em.columns=['Ave CO(Kg/veh)', 'Ave CO2(Kg/veh)', 'Ave NOx(Kg/veh)', 'Ave PMx(Kg/veh)', 'Ave HC(Kg/veh)', 'Ave fuel(L/veh)']
+    ave_Em.to_excel("../cities/san_francisco/"+ scenario+"/plots/ave_emission.xlsx",index=True,float_format='%.2f')
 
     # COs, CO2s, NOxs, PMxs, HCs, fuels = [], [], [], [], [], []
     # for drop_off_only_percentage in drop_off_only_percentages:
@@ -505,3 +581,126 @@ def OD_count(xmlfile, ODs=45):
 
 # origin, destination = OD_count('../cities/san_francisco/Scenario_Set_1/trip_0.01_with_' + '1.0' + '_drop-off.xml')
 # print(origin, origin.sum(),destination,destination.sum())
+
+def getPeakHourSpeed(summary_xml):
+    steps = etree.parse(summary_xml).getroot()
+    vs = np.zeros(24)
+    running = np.zeros(24)
+    am_vs, pm_vs = 0, 0
+    am_running, pm_running = 0, 0
+    for step in steps:
+        time = int(float(step.attrib['time']))
+        running_step = int(float(step.attrib['running']))
+        ave_vs = float(step.attrib['meanSpeed'])
+
+        if ave_vs >= 0:
+            if time >= 6*3600 and time < 10*3600:
+                am_vs += running_step * ave_vs
+                am_running += running_step
+            elif time >= 15*3600 and time < 19*3600:
+                pm_vs += running_step * ave_vs
+                pm_running += running_step
+
+    am_vs /= am_running
+    pm_vs /= pm_running
+    return [am_vs, pm_vs]
+
+def getHourlySpeed(summary_xml):
+    steps = etree.parse(summary_xml).getroot()
+    vs = np.zeros(24)
+    running = np.zeros(24)
+    am_vs, pm_vs = 0, 0
+    am_running, pm_running = 0, 0
+    for step in steps:
+        time = int(float(step.attrib['time']))
+        running_step = int(float(step.attrib['running']))
+        ave_vs = float(step.attrib['meanSpeed'])
+
+        if ave_vs >= 0:
+            vs[int(time/3600)] += running_step * ave_vs
+            running[int(time/3600)] += running_step
+
+    vs /= running
+    return np.nan_to_num(vs)
+
+def getSpeed():
+    hours = [str(i+1) for i in np.arange(24)]
+    result_path = '/home/huajun/Desktop/Nextcloud/2019-work/NCST_parking/cities/san_francisco/' + scenario + '/results/'
+    vs_hourly = []
+    vs_peak = []
+    for drop_off_percentage in drop_off_percentages:
+        for drop_off_only_percentage in drop_off_only_percentages:
+            for reallocate_percentage in reallocate_percentages:
+                if scenario[-1] == '2':
+                    xml_file = result_path + parking_supply + '/' + drop_off_percentage + '_drop-off_run5/summary_0.01_with_' + drop_off_percentage + '_drop-off_' + drop_off_only_percentage + '_drop-off_only.xml'
+                    index = drop_off_only_percentages
+                elif scenario[-1] == 'b':
+                    xml_file = result_path + parking_supply + '/summary_0.01_with_' + drop_off_percentage + '_drop-off_' + drop_off_only_percentage + '_drop-off_only_' + reallocate_percentage + '_reallocation.xml'
+                    index = reallocate_percentages
+                elif scenario[-1] == '1':
+                    xml_file = result_path + parking_supply + '/summary_0.01_with_' + drop_off_percentage + '_drop-off_' + drop_off_only_percentage + '_drop-off_only.xml'
+                    index = drop_off_percentages
+                elif scenario[-1] == '3':
+                    if scenario_3_case == '3':
+                        xml_file = result_path + 'case_' + scenario_3_case + '/' + parking_supply + '/summary_0.01_with_' + drop_off_percentage + '_drop-off_' + drop_off_only_percentage + '_drop-off_only.xml'
+                    else:
+                        xml_file = result_path + 'case_' + scenario_3_case + '/summary_0.01_with_' + drop_off_percentage + '_drop-off_' + drop_off_only_percentage + '_drop-off_only.xml'
+                    index = drop_off_percentages
+                vs_peak.append(getPeakHourSpeed(xml_file))
+                vs_hourly.append(getHourlySpeed(xml_file).tolist())
+
+    vs_peak_pd = pd.DataFrame(vs_peak, columns=['am_peak(m/s)', 'pm_peak(m/s)'], index=index)
+    vs_peak_pd.to_excel(result_path + 'peak_hour_vs.xlsx')
+
+    vs_pd = pd.DataFrame(vs_hourly, columns=hours, index=index)
+    vs_pd.to_excel(result_path + 'hourly_vs.xlsx')
+
+#####################
+#       Setup       #
+#####################
+path = '../cities/san_francisco/'
+scenario = 'Scenario_Set_2'
+scenario_3_case = '3'
+parking_supply = '0.2_parking'
+
+if scenario[-1] == '2':
+    drop_off_only_percentages = ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
+    drop_off_percentages = ['0.5'] #['0.5]
+    reallocate_percentages = ['0.0']  # capacity increase of remaining off-street parking structures
+    demand_reduced_by_parking_fee = None  # total travel demand reduced due to some 'imaginary' parking charge
+elif scenario[-1] == '1':
+    drop_off_only_percentages = ['0.0']
+    drop_off_percentages = ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
+    reallocate_percentages = ['0.0']  # capacity increase of remaining off-street parking structures
+    demand_reduced_by_parking_fee = None  # total travel demand reduced due to some 'imaginary' parking charge
+elif scenario[-1] =='b':
+    drop_off_only_percentages = ['0.0']  # percentage of on-street parking dedicated to drop-off only
+    drop_off_percentages = ['0.5']  # percentage of drop-off trips
+    reallocate_percentages = ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']  # capacity increase of remaining off-street parking structures
+    demand_reduced_by_parking_fee = None  # total travel demand reduced due to some 'imaginary' parking charge
+elif scenario[-1] == '3':
+    if scenario_3_case == '1':
+        drop_off_only_percentages = ['0.0']  # percentage of on-street parking dedicated to drop-off only
+        drop_off_percentages = ['0.0']  # percentage of drop-off trips
+        reallocate_percentages = ['0.0']  # capacity increase of remaining off-street parking structures
+        demand_reduced_by_parking_fee = 0.3  # total travel demand reduced due to some 'imaginary' parking charge
+    elif scenario_3_case == '2':
+        drop_off_only_percentages = ['0.5']  # percentage of on-street parking dedicated to drop-off only
+        drop_off_percentages = ['0.5']  # percentage of drop-off trips
+        reallocate_percentages = ['0.0']  # capacity increase of remaining off-street parking structures
+        demand_reduced_by_parking_fee = 0.3  # total travel demand reduced due to some 'imaginary' parking charge
+    elif scenario_3_case == '3':
+        drop_off_only_percentages = ['0.0']  # percentage of on-street parking dedicated to drop-off only
+        drop_off_percentages = ['0.5']  # percentage of drop-off trips
+        reallocate_percentages = ['0.3']  # capacity increase of remaining off-street parking structures
+        demand_reduced_by_parking_fee = 0.3  # total travel demand reduced due to some 'imaginary' parking charge
+
+plotEmission()
+# plotQueue()
+# emissions = plotEmission()
+# print(['{:.2f}'.format(e) for e in emissions[2]])
+# getSpeed()
+# plotVMT(scenerio=scenario)
+# plotTraveltime()
+# plotEdgeTraffic()
+

@@ -84,16 +84,16 @@ def Read_vehroute_file_nozero(xmlfile):
     return pd.DataFrame(ids),pd.DataFrame(types),pd.DataFrame(durations),pd.DataFrame(starts)
 
 
-def hist(df):
+def hist(df, step=900):
     ## get the occupacy via time for each type by stop file
     types = df['type'].values
     starts = df['start'].values
     ends = df['end'].values
-    occ = np.zeros((96,3))
-    for type, start, end in zip(types,starts,ends):
-        start_ind = start//900
-        end_ind = ceil(end/900)-1
-        occ_ind = np.arange(start_ind,min(end_ind+1,96))
+    occ = np.zeros((int(24*3600/step), 3))
+    for type, start, end in zip(types, starts, ends):
+        start_ind = start//step
+        end_ind = ceil(end/step)-1
+        occ_ind = np.arange(start_ind,min(end_ind+1, int(24*3600/step)))
         i = 0*(type == 'on') + 1 * (type == 'off') + 2 *(type == 'drop-off')
         for j in occ_ind:
             occ[j,i] +=1
@@ -104,12 +104,12 @@ def hist_v(df):
     types = df['type'].values
     starts = df['start'].values
     durations = df['duration'].values
-    occ = np.zeros((96,3))
+    occ = np.zeros((96, 3))
     for type, start, duration in zip(types,starts,durations):
         start_ind = start//900
         end = start + duration
         end_ind = ceil(end/900)-1
-        occ_ind = np.arange(start_ind,min(end_ind+1,96))
+        occ_ind = np.arange(start_ind, min(end_ind+1,96))
         i = 0*(type == 'on') + 1 * (type == 'off') + 2 *(type == 'drop-off')
         for j in occ_ind:
             occ[j,i] +=1
@@ -121,12 +121,14 @@ def am_sum(list):
     for i in np.arange(24,40,1):
         sum += list[i]
     return sum
+
 def pm_sum(list):
     sum = 0
     for i in np.arange(60,76,1):
         sum += list[i]
     return sum
-def s_hist_plot(list,path = "../cities/san_francisco/Scenario_Set_1/plots/"):
+
+def s_hist_plot(list, path = "../cities/san_francisco/Scenario_Set_1/plots/"):
     on_total = 20019 * 0.2
     off_total = 65404 * 0.2
     occ = np.array(list)
@@ -252,36 +254,39 @@ def s_hist_plot(list,path = "../cities/san_francisco/Scenario_Set_1/plots/"):
                 dpi=DPI)
     #plt.show()
 
-
+parking_supply = 'full_parking'
 occupacy1 = []
 #occupacy = []
 list = ['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
-for l in list:
-    df_id,df_type,df_end,df_starts = Read_Stop_file('../cities/san_francisco/Scenario_Set_2/results/0.5_drop-off/stops_0.01_with_0.5'  + '_drop-off_' + l +'_drop-off_only.xml')
-    out1 = pd.concat([df_id, df_type, df_end, df_starts], axis=1)
-    out1.columns = ['id', 'type', 'end', 'start']
-    occupacy1.append(hist(out1))
+# for l in list:
+#     df_id,df_type,df_end,df_starts = Read_Stop_file('../cities/san_francisco/Scenario_Set_1/results/0.5_drop-off/stops_0.01_with_0.5'  + '_drop-off_' + l +'_drop-off_only.xml')
+#     out1 = pd.concat([df_id, df_type, df_end, df_starts], axis=1)
+#     out1.columns = ['id', 'type', 'end', 'start']
+#     occupacy1.append(hist(out1))
+#
+#     # df_id,df_type,df_duration,df_starts = Read_vehroute_file_nozero('../cities/san_francisco/Scenario_Set_2/results/0.5_drop-off/vehroute_0.01_with_0.5' + '_drop-off_' + l +'_drop-off_only.xml')
+#     # out = pd.concat([df_id,df_type,df_duration,df_starts],axis=1)
+#     # out.columns = ['id','type','duration','start']
+#     #
+#     # #calculate occupancy
+#     # occupacy.append(hist(out))  #11 * (96 * 3)
+#
+# path = "../cities/san_francisco/Scenario_Set_1/plots/"
+#
+# s_hist_plot(occupacy1, path)
 
-    # df_id,df_type,df_duration,df_starts = Read_vehroute_file_nozero('../cities/san_francisco/Scenario_Set_2/results/0.5_drop-off/vehroute_0.01_with_0.5' + '_drop-off_' + l +'_drop-off_only.xml')
-    # out = pd.concat([df_id,df_type,df_duration,df_starts],axis=1)
-    # out.columns = ['id','type','duration','start']
-    #
-    # #calculate occupancy
-    # occupacy.append(hist(out))  #11 * (96 * 3)
-
-path = "../cities/san_francisco/Scenario_Set_2/plots/"
-
-s_hist_plot(occupacy1,path)
-
-
+hours = [str(i+1) for i in np.arange(24)]
+drop_off_percentages = ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0']
 occupacy1 = []
+occupancy_hourly = []
 #occupacy = []
 list = ['0.0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0']
 for l in list:
-    df_id,df_type,df_end,df_starts = Read_Stop_file('../cities/san_francisco/Scenario_Set_1/results/run1/stops_0.01_with_' + l + '_drop-off_0.0'  +'_drop-off_only.xml')
+    df_id,df_type,df_end,df_starts = Read_Stop_file('../cities/san_francisco/Scenario_Set_1/results/' + parking_supply  + '/stops_0.01_with_' + l + '_drop-off_0.0'  +'_drop-off_only.xml')
     out1 = pd.concat([df_id, df_type, df_end, df_starts], axis=1)
     out1.columns = ['id', 'type', 'end', 'start']
     occupacy1.append(hist(out1))
+    occupancy_hourly.append(hist(out1, 3600))
 
     # df_id,df_type,df_duration,df_starts = Read_vehroute_file_nozero('../cities/san_francisco/Scenario_Set_2/results/0.5_drop-off/vehroute_0.01_with_0.5' + '_drop-off_' + l +'_drop-off_only.xml')
     # out = pd.concat([df_id,df_type,df_duration,df_starts],axis=1)
@@ -291,5 +296,11 @@ for l in list:
     # occupacy.append(hist(out))  #11 * (96 * 3)
 
 path = "../cities/san_francisco/Scenario_Set_1/plots/"
-
-s_hist_plot(occupacy1,path)
+occ = np.array(occupancy_hourly)
+for type, index in zip(['on', 'off', 'drop-off'], [0, 1, 2]):
+    occ_hourly_pd = pd.DataFrame(occ[:,:,index], columns=hours, index=drop_off_percentages)
+    occ_hourly_pd.to_excel('../cities/san_francisco/Scenario_Set_1/results/' + type + '_occupancy.xlsx')
+total_occ = occ.sum(axis=2)
+total_occ_pd = pd.DataFrame(total_occ, columns=hours, index=drop_off_percentages)
+total_occ_pd.to_excel('../cities/san_francisco/Scenario_Set_1/results/total_occupancy.xlsx')
+s_hist_plot(occupacy1,  path)
